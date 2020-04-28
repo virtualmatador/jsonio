@@ -1,6 +1,0 @@
-#include "jsonio/json.cpp"
-#include "jsonio/json_pair.cpp"
-#include "jsonio/json_key.cpp"
-#include "jsonio/json_value.cpp"
-#include "jsonio/json_string.cpp"
-#include "jsonio/json_array.cpp"
