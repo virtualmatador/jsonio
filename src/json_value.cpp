@@ -251,7 +251,14 @@ size_t jsonio::json_value::read(std::istream & is, const std::string & delimiter
         {
             if (!isspace(source))
             {
-                if (source == '[')
+                if (source == ']')
+                {
+                    delimiter = delimiters.find(source);
+                    flags_ &= ~MASK_PHASE;
+                    flags_ |= PHASE_COMPLETED;
+                    flags_ |= EMPTY_VALUE;
+                }
+                else if (source == '[')
                 {
                     flags_ &= ~MASK_PHASE;
                     flags_ |= PHASE_ARRAY;

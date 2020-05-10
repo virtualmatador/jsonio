@@ -51,7 +51,8 @@ private:
         PHASE_BINARY = 0x0004,
         PHASE_DELIMITER = 0x0005,
         PHASE_COMPLETED = 0x0006,
-        MASK_PHASE = 0x0007;
+        MASK_PHASE = 0x0007,
+        EMPTY_VALUE = 0x0008;
 
 private:
     size_t read(std::istream & is, const std::string & delimiters);

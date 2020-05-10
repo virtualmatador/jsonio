@@ -3,16 +3,19 @@
 
 #include <iostream>
 #include <string>
+#include <variant>
 #include <vector>
 
+#include "json_array.h"
 #include "json_pair.h"
 
 namespace jsonio
 {
 
-using VECTOR_TYPE = std::vector<json_pair>;
+using OBJECT_TYPE = std::vector<json_pair>;
+using JSON_PARENT = std::variant<OBJECT_TYPE, json_array>;
 
-class json : public VECTOR_TYPE
+class json : public JSON_PARENT
 {
 private:
     unsigned int flags_;
@@ -22,7 +25,8 @@ private:
     static const unsigned int
         PHASE_START = 0x0000,
         PHASE_PAIR = 0x0001,
-        PHASE_COMPLETED = 0x0002,
+        PHASE_ARRAY = 0x0002,
+        PHASE_COMPLETED = 0x0003,
         MASK_PHASE = 0x0003,
         SKIP_PREFIX = 0x0004;
 
@@ -38,9 +42,18 @@ public:
     ~json() noexcept;
     
     bool completed() const;
+    bool is_object() const;
+    bool is_array() const;
 
     json_value & operator[](const std::string & key);
     const json_value & operator[](const std::string & key) const;
+    json_value & operator[](const std::size_t & index);
+    const json_value & operator[](const std::size_t & index) const;
+
+    const OBJECT_TYPE & get_object() const;
+    const json_array & get_array() const;
+
+    const json_value* get_value(const std::string & key) const;
 
 private:
     void read(std::istream & is);

@@ -96,7 +96,10 @@ void jsonio::json_array::read(std::istream & is)
             size_t delimiter = value_.read(is, delimiters);
             if (is.good())
             {
-                push_back(std::move(value_));
+                if ((value_.flags_ & json_value::EMPTY_VALUE) == 0)
+                {
+                    push_back(std::move(value_));
+                }
                 if (delimiters[delimiter] == ']')
                 {
                     flags_ &= ~MASK_PHASE;

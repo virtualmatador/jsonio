@@ -45,6 +45,7 @@ public:
     const json_value & operator[](size_t index) const;
 
 public:
+    friend class json;
     friend class json_value;
     friend std::istream & operator>>(std::istream & is, json_array & target);
     friend std::ostream & operator<<(std::ostream & os, const json_array & source);
