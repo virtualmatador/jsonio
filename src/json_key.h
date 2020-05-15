@@ -1,5 +1,5 @@
-#ifndef JSONIO_JSON_KEY_H
-#define JSONIO_JSON_KEY_H
+#ifndef JSONIO_SRC_JSON_KEY_H
+#define JSONIO_SRC_JSON_KEY_H
 
 #include <iostream>
 
@@ -48,4 +48,4 @@ public:
 
 } // namespace jsonio
 
-#endif //JSONIO_JSON_KEY_H
+#endif //JSONIO_SRC_JSON_KEY_H

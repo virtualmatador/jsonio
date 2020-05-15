@@ -1,5 +1,5 @@
-#ifndef JSONIO_JSON_PAIR_H
-#define JSONIO_JSON_PAIR_H
+#ifndef JSONIO_SRC_JSON_PAIR_H
+#define JSONIO_SRC_JSON_PAIR_H
 
 #include <iostream>
 #include <string>
@@ -55,4 +55,4 @@ std::ostream & operator<<(std::ostream & os, const json_pair & source);
 
 } // namespace jsonio
 
-#endif //JSONIO_JSON_PAIR_H
+#endif //JSONIO_SRC_JSON_PAIR_H

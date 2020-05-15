@@ -1,5 +1,5 @@
-#ifndef JSONIO_JSON_ARRAY_H
-#define JSONIO_JSON_ARRAY_H
+#ifndef JSONIO_SRC_JSON_ARRAY_H
+#define JSONIO_SRC_JSON_ARRAY_H
 
 #include <iostream>
 #include <memory>
@@ -56,4 +56,4 @@ std::ostream & operator<<(std::ostream & os, const json_array & source);
 
 } // namespace jsonio
 
-#endif //JSONIO_JSON_ARRAY_H
+#endif //JSONIO_SRC_JSON_ARRAY_H

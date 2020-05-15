@@ -1,5 +1,5 @@
-#ifndef JSONIO_JSON_STRING_H
-#define JSONIO_JSON_STRING_H
+#ifndef JSONIO_SRC_JSON_STRING_H
+#define JSONIO_SRC_JSON_STRING_H
 
 #include <iostream>
 #include <string>

@@ -1,5 +1,5 @@
-#ifndef JSONIO_JSON_VALUE_H
-#define JSONIO_JSON_VALUE_H
+#ifndef JSONIO_SRC_JSON_VALUE_H
+#define JSONIO_SRC_JSON_VALUE_H
 
 #include <iostream>
 #include <memory>
@@ -127,4 +127,4 @@ std::ostream & operator<<(std::ostream & os, const json_value & source);
 
 } // namespace jsonio
 
-#endif //JSONIO_JSON_VALUE_H
+#endif //JSONIO_SRC_JSON_VALUE_H
