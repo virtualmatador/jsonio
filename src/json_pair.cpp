@@ -6,24 +6,24 @@ jsonio::json_pair::json_pair() noexcept
 }
 
 jsonio::json_pair::json_pair(const std::string & key) noexcept
-    : PAIR_TYPE{std::make_pair(json_key(key), json_value())}
+    : PAIR_TYPE{std::make_pair(json_key(key), json())}
     , flags_{PHASE_COMPLETED}
 {
 }
 
 jsonio::json_pair::json_pair(std::string && key) noexcept
-    : PAIR_TYPE{std::make_pair(json_key(std::move(key)), json_value())}
+    : PAIR_TYPE{std::make_pair(json_key(std::move(key)), json())}
     , flags_{PHASE_COMPLETED}
 {
 }
 
-jsonio::json_pair::json_pair(const std::string & key, const jsonio::json_value & value) noexcept
+jsonio::json_pair::json_pair(const std::string & key, const jsonio::json & value) noexcept
     : PAIR_TYPE{std::make_pair(json_key(key), value)}
     , flags_{PHASE_COMPLETED}
 {
 }
 
-jsonio::json_pair::json_pair(std::string && key, jsonio::json_value && value) noexcept
+jsonio::json_pair::json_pair(std::string && key, jsonio::json && value) noexcept
     : PAIR_TYPE{std::make_pair(json_key(std::move(key)), std::move(value))}
     , flags_{PHASE_COMPLETED}
 {
@@ -90,7 +90,7 @@ size_t jsonio::json_pair::read(std::istream & is, const std::string & delimiters
             {
                 flags_ &= ~MASK_PHASE;
                 flags_ |= PHASE_VALUE;
-                second.flags_ = json_value::PHASE_START;
+                second.flags_ = json::PHASE_START;
             }
             else
             {

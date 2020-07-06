@@ -5,12 +5,12 @@
 #include <string>
 
 #include "json_key.h"
-#include "json_value.h"
+#include "json.h"
 
 namespace jsonio
 {
 
-using PAIR_TYPE = std::pair<json_key, json_value>;
+using PAIR_TYPE = std::pair<json_key, json>;
 
 class json_pair : public PAIR_TYPE
 {
@@ -30,8 +30,8 @@ public:
     json_pair() noexcept;
     json_pair(const std::string & key) noexcept;
     json_pair(std::string && key) noexcept;
-    json_pair(const std::string & key, const json_value & value) noexcept;
-    json_pair(std::string && key, json_value && value) noexcept;
+    json_pair(const std::string & key, const json & value) noexcept;
+    json_pair(std::string && key, json && value) noexcept;
     json_pair(const json_pair & source) noexcept;
     json_pair(json_pair && source) noexcept;
     json_pair & operator=(const json_pair & source) noexcept;
@@ -45,7 +45,7 @@ private:
     void write(std::ostream & os, int indents) const;
 
 public:
-    friend class json;
+    friend class json_object;
     friend std::istream & operator>>(std::istream & is, json_pair & target);
     friend std::ostream & operator<<(std::ostream & os, const json_pair & source);
 };

@@ -1,7 +1,6 @@
 #include <algorithm>
 
 #include "json.h"
-#include "json_value.h"
 
 #include "json_array.h"
 
@@ -63,7 +62,7 @@ void jsonio::json_array::read(std::istream & is)
         flags_ = PHASE_START;
     if ((flags_ & MASK_PHASE) == PHASE_START)
     {
-        value_.flags_ = json_value::PHASE_START;
+        value_.flags_ = json::PHASE_START;
         if (flags_ & SKIP_PREFIX)
         {
             flags_ &= ~MASK_PHASE;
@@ -96,7 +95,7 @@ void jsonio::json_array::read(std::istream & is)
             size_t delimiter = value_.read(is, delimiters);
             if (is.good())
             {
-                if ((value_.flags_ & json_value::EMPTY_VALUE) == 0)
+                if ((value_.flags_ & json::EMPTY_VALUE) == 0)
                 {
                     push_back(std::move(value_));
                 }
@@ -145,12 +144,12 @@ const void jsonio::json_array::write(std::ostream & os, int indents) const
     }
 }
 
-jsonio::json_value & jsonio::json_array::operator[](size_t index)
+jsonio::json & jsonio::json_array::operator[](size_t index)
 {
-    return const_cast<json_value &>(static_cast<const json_array &>(*this).operator[](index));
+    return const_cast<json &>(static_cast<const json_array &>(*this).operator[](index));
 }
 
-const jsonio::json_value & jsonio::json_array::operator[](size_t index) const
+const jsonio::json & jsonio::json_array::operator[](size_t index) const
 {
     return ARRAY_TYPE::operator[](index);
 }

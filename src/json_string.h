@@ -45,7 +45,7 @@ private:
 
 public:
     friend class json_key;
-    friend class json_value;
+    friend class json;
 };
 
 }

@@ -5,18 +5,18 @@
 #include <memory>
 #include <vector>
 
-#include "json_value.h"
+#include "json.h"
 
 namespace jsonio
 {
 
-using ARRAY_TYPE = std::vector<json_value>;
+using ARRAY_TYPE = std::vector<json>;
 
 class json_array : public ARRAY_TYPE
 {
 private:
     unsigned int flags_;
-    json_value value_;
+    json value_;
 
 private:
     static const unsigned int
@@ -41,12 +41,12 @@ public:
     ~json_array() noexcept;
     
     bool completed() const;
-    json_value & operator[](size_t index);
-    const json_value & operator[](size_t index) const;
+    json & operator[](size_t index);
+    const json & operator[](size_t index) const;
 
 public:
+    friend class json_object;
     friend class json;
-    friend class json_value;
     friend std::istream & operator>>(std::istream & is, json_array & target);
     friend std::ostream & operator<<(std::ostream & os, const json_array & source);
 };
