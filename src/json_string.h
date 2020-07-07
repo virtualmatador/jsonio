@@ -7,13 +7,24 @@
 namespace jsonio
 {
 
+enum class JsonType : size_t
+{
+    J_NULL,
+    J_STRING,
+    J_LONG,
+    J_DOUBLE,
+    J_BOOL,
+    J_OBJECT,
+    J_ARRAY,
+};
+
 class json_string : public std::string
 {
 private:
     unsigned int flags_;
 
 private:
-    static const unsigned int
+    static constexpr unsigned int
         PHASE_START = 0x0000,
         PHASE_TEXT = 0x0001,
         PHASE_COMPLETED = 0x0002,

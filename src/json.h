@@ -6,25 +6,14 @@
 #include <string>
 #include <variant>
 
+#include "json_array.hpp"
+#include "json_object.hpp"
 #include "json_string.h"
 
 namespace jsonio
 {
 
-enum class JsonType : size_t
-{
-    J_NULL,
-    J_STRING,
-    J_LONG,
-    J_DOUBLE,
-    J_BOOL,
-    J_OBJECT,
-    J_ARRAY,
-};
-
-class json_object;
-class json_array;
-
+template<class json>
 using VARIANT_TYPE = std::variant
 <
     void*,
@@ -32,18 +21,19 @@ using VARIANT_TYPE = std::variant
     long,
     double,
     bool,
-    std::unique_ptr<json_object>,
-    std::unique_ptr<json_array>
+    json_object<json>,
+    json_array<json>
 >;
 
-class json : public VARIANT_TYPE
+class json : public VARIANT_TYPE<json>
 {
 private:
+    using PARENT_TYPE = VARIANT_TYPE<json>;
     unsigned int flags_;
     std::string binary_;
 
 private:
-    static const unsigned int
+    static constexpr unsigned int
         PHASE_START = 0x0000,
         PHASE_ARRAY = 0x0001,
         PHASE_OBJECT = 0x0002,
@@ -70,10 +60,10 @@ public:
     json(const long & long_value);
     json(const double & double_value);
     json(const bool & bool_value);
-    json(const json_object & json_object_value);
-    json(json_object && json_object_value);
-    json(const json_array & json_array_value);
-    json(json_array && json_array_value);
+    json(const json_object<json> & json_object_value);
+    json(json_object<json> && json_object_value);
+    json(const json_array<json> & json_array_value);
+    json(json_array<json> && json_array_value);
 
     json & operator=(const json & source) noexcept;
     json & operator=(json && source) noexcept;
@@ -85,10 +75,10 @@ public:
     json & operator=(const long & long_value);
     json & operator=(const double & double_value);
     json & operator=(const bool & bool_value);
-    json & operator=(const json_object & json_object_value);
-    json & operator=(json_object && json_object_value);
-    json & operator=(const json_array & json_array_value);
-    json & operator=(json_array && json_array_value);
+    json & operator=(const json_object<json> & json_object_value);
+    json & operator=(json_object<json> && json_object_value);
+    json & operator=(const json_array<json> & json_array_value);
+    json & operator=(json_array<json> && json_array_value);
 
     ~json() noexcept;
 
@@ -111,18 +101,19 @@ public:
     const double & get_double() const;
     bool & get_bool();
     const bool & get_bool() const;
-    json_object & get_object();
-    const json_object & get_object() const;
-    json_array & get_array();
-    const json_array & get_array() const;
+    json_object<json> & get_object();
+    const json_object<json> & get_object() const;
+    json_array<json> & get_array();
+    const json_array<json> & get_array() const;
 
 public:
-    friend class json_pair;
-    friend class json_array;
+    friend class json_array<json>;
+    friend class json_object<json>;
+    friend class json_pair<json>;
     friend std::istream & operator>>(std::istream & is, json & target);
     friend std::ostream & operator<<(std::ostream & os, const json & source);
 };
-    
+
 std::istream & operator>>(std::istream & is, json & target);
 std::ostream & operator<<(std::ostream & os, const json & source);
 

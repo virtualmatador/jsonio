@@ -15,7 +15,7 @@ private:
     unsigned int flags_;
 
 private:
-    static const unsigned int
+    static constexpr unsigned int
         PHASE_START = 0x0000,
         PHASE_TEXT = 0x0001,
         PHASE_COLON = 0x0002,
@@ -43,7 +43,7 @@ private:
     void write(std::ostream & os, int idndents) const;
 
 public:
-    friend class json_pair;
+    template<class> friend class json_pair;
 };
 
 } // namespace jsonio
