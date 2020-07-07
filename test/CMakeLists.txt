@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.16)
+add_executable("test-jsonio" "main.cpp")
+set_property(TARGET "test-jsonio" PROPERTY CXX_STANDARD 17)
+target_link_libraries("test-jsonio" "jsonio")
+add_test("test-jsonio" "test-jsonio")

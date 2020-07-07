@@ -1,4 +1,6 @@
 #include <algorithm>
+#include <iomanip>
+#include <limits>
 #include <memory>
 
 #include "json.h"
@@ -276,18 +278,18 @@ size_t jsonio::json::read(std::istream & is, const std::string & delimiters)
             }
         }
     }
-    if ((flags_ & MASK_PHASE) == PHASE_ARRAY)
+    if ((flags_ & MASK_PHASE) == PHASE_OBJECT)
     {
-        std::get<json_array<json>>(*this).read(is);
+        std::get<json_object<json>>(*this).read(is);
         if (is.good())
         {
             flags_ &= ~MASK_PHASE;
             flags_ |= PHASE_DELIMITER;
         }
     }
-    if ((flags_ & MASK_PHASE) == PHASE_OBJECT)
+    if ((flags_ & MASK_PHASE) == PHASE_ARRAY)
     {
-        std::get<json_object<json>>(*this).read(is);
+        std::get<json_array<json>>(*this).read(is);
         if (is.good())
         {
             flags_ &= ~MASK_PHASE;
@@ -314,7 +316,7 @@ size_t jsonio::json::read(std::istream & is, const std::string & delimiters)
             else
                 break;
         }
-        if (is.good())
+        if (is.good() || delimiters == "\n")
         {
             binary_.erase(std::find_if(binary_.rbegin(), binary_.rend(),
                 [](const char c)
@@ -358,20 +360,28 @@ size_t jsonio::json::read(std::istream & is, const std::string & delimiters)
     }
     if ((flags_ & MASK_PHASE) == PHASE_DELIMITER)
     {
-        char source;
-        while (is >> source)
+        if (delimiters == "\n")
         {
-            delimiter = delimiters.find(source);
-            if (delimiter != std::string::npos)
+            flags_ &= ~MASK_PHASE;
+            flags_ |= PHASE_COMPLETED;
+        }
+        else
+        {
+            char source;
+            while (is >> source)
             {
-                flags_ &= ~MASK_PHASE;
-                flags_ |= PHASE_COMPLETED;
-                break;
-            }
-            else if (!isspace(source))
-            {
-                is.setstate(std::ios::iostate::_S_badbit);
-                break;
+                delimiter = delimiters.find(source);
+                if (delimiter != std::string::npos)
+                {
+                    flags_ &= ~MASK_PHASE;
+                    flags_ |= PHASE_COMPLETED;
+                    break;
+                }
+                else if (!isspace(source))
+                {
+                    is.setstate(std::ios::iostate::_S_badbit);
+                    break;
+                }
             }
         }
     }
@@ -404,7 +414,7 @@ void jsonio::json::write(std::ostream & os, int indents) const
         case JsonType::J_DOUBLE:
             for (int i = 0; i < indents; ++i)
                 os << '\t';
-            os << get_double();
+            os << std::setprecision(std::numeric_limits<double>::max_digits10) << get_double();
             break;
         case JsonType::J_BOOL:
             for (int i = 0; i < indents; ++i)

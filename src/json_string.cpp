@@ -77,6 +77,7 @@ bool jsonio::json_string::completed() const
 
 void jsonio::json_string::read(std::istream & is)
 {
+    is >> std::noskipws;
     if ((flags_ & MASK_PHASE) == PHASE_COMPLETED)
         flags_ = PHASE_START;
     if ((flags_ & MASK_PHASE) == PHASE_START)
@@ -119,6 +120,7 @@ void jsonio::json_string::read(std::istream & is)
             }
         }
     }
+    is >> std::skipws;
 }
 
 void jsonio::json_string::write(std::ostream & os) const

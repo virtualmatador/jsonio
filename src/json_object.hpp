@@ -1,6 +1,7 @@
 #ifndef JSONIO_SRC_JSON_OBJECT_HPP
 #define JSONIO_SRC_JSON_OBJECT_HPP
 
+#include <algorithm>
 #include <iostream>
 #include <memory>
 #include <string>
