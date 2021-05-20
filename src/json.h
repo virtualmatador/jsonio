@@ -109,7 +109,6 @@ public:
 public:
     friend class json_array<json>;
     friend class json_object<json>;
-    friend class json_pair<json>;
     friend std::istream & operator>>(std::istream & is, json & target);
     friend std::ostream & operator<<(std::ostream & os, const json & source);
 };

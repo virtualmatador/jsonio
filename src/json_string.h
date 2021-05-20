@@ -55,7 +55,7 @@ private:
     static char Escape(const char source);
 
 public:
-    friend class json_key;
+    template<class> friend class json_object;
     friend class json;
 };
 

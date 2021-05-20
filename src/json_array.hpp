@@ -116,7 +116,9 @@ public:
                             flags_ |= PHASE_VALUE;
                         }
                         else
+                        {
                             is.setstate(std::ios::iostate::_S_badbit);
+                        }
                         break;
                     }
                 }
@@ -147,7 +149,9 @@ public:
                     }
                 }
                 else
+                {
                     break;
+                }
             }
         }
     }
@@ -165,16 +169,22 @@ public:
                 if (sub_JsonValue.completed())
                 {
                     if (comma)
+                    {
                         os << ',';
+                    }
                     else
+                    {
                         comma = true;
+                    }
                     os << std::endl;
                     sub_JsonValue.write(os, indents + 1);
                 }
             }
             os << std::endl;
             for (int i = 0; i < indents; ++i)
+            {
                 os << '\t';
+            }
             os << "]";
         }
     }

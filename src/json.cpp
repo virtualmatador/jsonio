@@ -234,7 +234,9 @@ size_t jsonio::json::read(std::istream & is, const std::string & delimiters)
 {
     size_t delimiter = -1;
     if ((flags_ & MASK_PHASE) == PHASE_COMPLETED)
+    {
         flags_ = PHASE_START;
+    }
     if ((flags_ & MASK_PHASE) == PHASE_START)
     {
         char source;
@@ -312,9 +314,13 @@ size_t jsonio::json::read(std::istream & is, const std::string & delimiters)
         {
             delimiter = delimiters.find(source);
             if (delimiter == std::string::npos)
+            {
                 binary_.append(1, source);
+            }
             else
+            {
                 break;
+            }
         }
         if (is.good() || delimiters == "\n")
         {
@@ -345,16 +351,22 @@ size_t jsonio::json::read(std::istream & is, const std::string & delimiters)
             {
                 char* end_ptr;
                 if (binary_.find('.') != std::string::npos)
+                {
                     PARENT_TYPE::operator=(strtod(binary_.c_str(), &end_ptr));
+                }
                 else
+                {
                     PARENT_TYPE::operator=(strtol(binary_.c_str(), &end_ptr, 0));
+                }
                 if (*end_ptr == '\0')
                 {
                     flags_ &= ~MASK_PHASE;
                     flags_ |= PHASE_COMPLETED;
                 }
                 else
+                {
                     is.setstate(std::ios::iostate::_S_badbit);
+                }
             }
         }
     }
@@ -396,33 +408,47 @@ void jsonio::json::write(std::ostream & os, int indents) const
         {
         case JsonType::J_NULL:
             for (int i = 0; i < indents; ++i)
+            {
                 os << '\t';
+            }
             os << "null";
             break;
         case JsonType::J_STRING:
             for (int i = 0; i < indents; ++i)
+            {
                 os << '\t';
+            }
             os << '\"';
             std::get<json_string>(*this).write(os);
             os << '\"';
             break;
         case JsonType::J_LONG:
             for (int i = 0; i < indents; ++i)
+            {
                 os << '\t';
+            }
             os << get_long();
             break;
         case JsonType::J_DOUBLE:
             for (int i = 0; i < indents; ++i)
+            {
                 os << '\t';
+            }
             os << std::setprecision(std::numeric_limits<double>::max_digits10) << get_double();
             break;
         case JsonType::J_BOOL:
             for (int i = 0; i < indents; ++i)
+            {
                 os << '\t';
+            }
             if (get_bool())
+            {
                 os << "true";
+            }
             else
+            {
                 os << "false";
+            }
             break;
         case JsonType::J_OBJECT:
             std::get<json_object<json>>(*this).write(os, indents);
@@ -463,12 +489,7 @@ const jsonio::json & jsonio::json::operator[](size_t index) const
 
 const jsonio::json* jsonio::json::get_value(const std::string & key) const
 {
-    auto it = std::find_if(std::get<json_object<json>>(*this).begin(),
-        std::get<json_object<json>>(*this).end(),
-        [&](const json_pair<json> & key_value)
-    {
-        return key_value.first == key;
-    });
+    auto it = std::get<json_object<json>>(*this).find(key);
     if (it != std::get<json_object<json>>(*this).end())
     {
         return &it->second;
@@ -565,18 +586,6 @@ template<> std::istream & jsonio::operator>>(std::istream & is, jsonio::json_arr
 }
 
 template<> std::ostream & jsonio::operator<<(std::ostream & os, const jsonio::json_array<json> & source)
-{
-    source.write(os, 0);
-    return os;
-}
-
-template<> std::istream & jsonio::operator>>(std::istream & is, jsonio::json_pair<json> & target)
-{
-    target.read(is, "\n");
-    return is;
-}
-
-template<> std::ostream & jsonio::operator<<(std::ostream & os, const jsonio::json_pair<json> & source)
 {
     source.write(os, 0);
     return os;

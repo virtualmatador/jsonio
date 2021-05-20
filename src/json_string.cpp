@@ -51,8 +51,13 @@ jsonio::json_string & jsonio::json_string::operator=(const std::string & text) n
     flags_ = PHASE_COMPLETED;
     std::string::operator=(text);
     for (auto source : *(std::string*)this)
+    {
         if (Escape(source) != '\0')
+        {
             flags_ |= ESCAPED;
+            break;
+        }
+    }
     return *this;
 }
 
@@ -61,8 +66,13 @@ jsonio::json_string & jsonio::json_string::operator=(std::string && text) noexce
     flags_ = PHASE_COMPLETED;
     std::string::operator=(std::move(text));
     for (auto source : *(std::string*)this)
+    {
         if (Escape(source) != '\0')
+        {
             flags_ |= ESCAPED;
+            break;
+        }
+    }
     return *this;
 }
 
@@ -79,7 +89,9 @@ void jsonio::json_string::read(std::istream & is)
 {
     is >> std::noskipws;
     if ((flags_ & MASK_PHASE) == PHASE_COMPLETED)
+    {
         flags_ = PHASE_START;
+    }
     if ((flags_ & MASK_PHASE) == PHASE_START)
     {
         flags_ &= ~MASK_PHASE;
@@ -108,9 +120,13 @@ void jsonio::json_string::read(std::istream & is)
             else if (source != '\"')
             {
                 if (source != '\\')
+                {
                     append(1, source);
+                }
                 else
+                {
                     flags_ |= ESCAPING;
+                }
             }
             else
             {
@@ -132,10 +148,14 @@ void jsonio::json_string::write(std::ostream & os) const
             for (const char source : *this)
             {
                 if (!os.good())
+                {
                     break;
+                }
                 char escaped_source = Escape(source);
                 if (escaped_source == '\0')
+                {
                     os << source;
+                }
                 else
                 {
                     os << '\\';
@@ -144,7 +164,9 @@ void jsonio::json_string::write(std::ostream & os) const
             }
         }
         else
-            os << *((std::string*)this);    
+        {
+            os << *((std::string*)this);
+        }
     }
 }
 
