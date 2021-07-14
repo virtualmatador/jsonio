@@ -105,6 +105,18 @@ public:
         return PARENT_TYPE::find(key)->second;
     }
 
+    void steal(const json_object& source)
+    {
+        for (auto& [key, value] : *this)
+        {
+            auto source_node = source.find(key);
+            if (source_node != source.end())
+            {
+                value.steal(source_node->second);
+            }
+        }
+    }
+
     void read(std::istream & is)
     {
         if ((flags_ & MASK_PHASE) == PHASE_COMPLETED)
@@ -266,7 +278,8 @@ public:
                 }
                 os << '\"' << key << "\": ";
                 int sub_indents;
-                if (value.index() >= size_t(JsonType::J_OBJECT))
+                if (value.index() == size_t(JsonType::J_ARRAY) ||
+                    value.index() == size_t(JsonType::J_OBJECT))
                 {
                     os << std::endl;
                     sub_indents = indents + 1;

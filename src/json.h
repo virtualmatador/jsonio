@@ -21,8 +21,8 @@ using VARIANT_TYPE = std::variant
     long,
     double,
     bool,
-    json_object<json>,
-    json_array<json>
+    json_array<json>,
+    json_object<json>
 >;
 
 class json : public VARIANT_TYPE<json>
@@ -90,6 +90,7 @@ public:
     json & operator[](size_t index);
     const json & operator[](size_t index) const;
     const json* get_value(const std::string & key) const;
+    void steal(const json & source);
 
     void* & get_null();
     void* const & get_null() const;

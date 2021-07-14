@@ -14,8 +14,8 @@ enum class JsonType : size_t
     J_LONG,
     J_DOUBLE,
     J_BOOL,
-    J_OBJECT,
     J_ARRAY,
+    J_OBJECT,
 };
 
 class json_string : public std::string

@@ -96,11 +96,11 @@ jsonio::json & jsonio::json::operator=(const jsonio::json & source) noexcept
         case JsonType::J_BOOL:
             PARENT_TYPE::operator=(std::get<bool>(*(PARENT_TYPE*)&source));
             break;
-        case JsonType::J_OBJECT:
-            PARENT_TYPE::operator=(std::get<json_object<json>>(*(PARENT_TYPE*)&source));
-            break;
         case JsonType::J_ARRAY:
             PARENT_TYPE::operator=(std::get<json_array<json>>(*(PARENT_TYPE*)&source));
+            break;
+        case JsonType::J_OBJECT:
+            PARENT_TYPE::operator=(std::get<json_object<json>>(*(PARENT_TYPE*)&source));
             break;
         }
         flags_ = source.flags_;
@@ -130,11 +130,11 @@ jsonio::json & jsonio::json::operator=(jsonio::json && source) noexcept
         case JsonType::J_BOOL:
             PARENT_TYPE::operator=(std::move(std::get<bool>(*(PARENT_TYPE*)&source)));
             break;
-        case JsonType::J_OBJECT:
-            PARENT_TYPE::operator=(std::move(std::get<json_object<json>>(*(PARENT_TYPE*)&source)));
-            break;
         case JsonType::J_ARRAY:
             PARENT_TYPE::operator=(std::move(std::get<json_array<json>>(*(PARENT_TYPE*)&source)));
+            break;
+        case JsonType::J_OBJECT:
+            PARENT_TYPE::operator=(std::move(std::get<json_object<json>>(*(PARENT_TYPE*)&source)));
             break;
         }
         flags_ = source.flags_;
@@ -404,7 +404,7 @@ void jsonio::json::write(std::ostream & os, int indents) const
 {
     if (completed())
     {
-        switch ((JsonType)index())
+        switch (get_type())
         {
         case JsonType::J_NULL:
             for (int i = 0; i < indents; ++i)
@@ -441,20 +441,13 @@ void jsonio::json::write(std::ostream & os, int indents) const
             {
                 os << '\t';
             }
-            if (get_bool())
-            {
-                os << "true";
-            }
-            else
-            {
-                os << "false";
-            }
-            break;
-        case JsonType::J_OBJECT:
-            std::get<json_object<json>>(*this).write(os, indents);
+            os << (get_bool() ? "true" : "false");
             break;
         case JsonType::J_ARRAY:
             std::get<json_array<json>>(*this).write(os, indents);
+            break;
+        case JsonType::J_OBJECT:
+            std::get<json_object<json>>(*this).write(os, indents);
             break;
         }
     }
@@ -495,6 +488,37 @@ const jsonio::json* jsonio::json::get_value(const std::string & key) const
         return &it->second;
     }
     return nullptr;
+}
+
+void jsonio::json::steal(const json & source)
+{
+    if (get_type() == source.get_type())
+    {
+        switch (get_type())
+        {
+        case JsonType::J_NULL :
+            get_null() = source.get_null();
+            break;
+        case JsonType::J_STRING :
+            get_string() = source.get_string();
+            break;
+        case JsonType::J_LONG :
+            get_long() = source.get_long();
+            break;
+        case JsonType::J_DOUBLE :
+            get_double() = source.get_double();
+            break;
+        case JsonType::J_BOOL :
+            get_bool() = source.get_bool();
+            break;
+        case JsonType::J_ARRAY :
+            get_array() = source.get_array();
+            break;
+        case JsonType::J_OBJECT :
+            get_object().steal(source.get_object());
+            break;
+        }
+    }
 }
 
 void* & jsonio::json::get_null()
