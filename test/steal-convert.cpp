@@ -40,9 +40,9 @@ bool t02()
     jsonio::json json1;
     std::istringstream { text1 } >> json1;
     jsonio::json json2;
-    auto text2 = R"({"a": false, "bb": false})";
+    auto text2 = R"({"a": 0, "bb": false})";
     std::istringstream { text2 } >> json2;
-    json1.steal(json2, false);
+    json1.steal(json2, true);
     std::ostringstream os;
     os << json1;
     auto arr = os.str();
@@ -64,16 +64,40 @@ bool t03()
     jsonio::json json1;
     std::istringstream { text1 } >> json1;
     jsonio::json json2;
-    auto text2 = R"({"aa": false, "b": ["1", "2", {}]})";
+    auto text2 = R"({"aa": false, "b": "1"})";
     std::istringstream { text2 } >> json2;
-    json1.steal(json2, false);
+    json1.steal(json2, true);
     std::ostringstream os;
     os << json1;
     auto arr = os.str();
     std::regex pattern{"\r|\n|\t"};
     std::string out;
     std::regex_replace(std::back_insert_iterator(out), arr.begin(), arr.end(), pattern, "");
-    auto text3 = R"({"a": true,"b": ["1","2",{}]})";
+    auto text3 = R"({"a": true,"b": ["1"]})";
+    if (!json1.completed() || json1.get_type() != jsonio::JsonType::J_OBJECT || out != text3)
+    {
+        std::cerr << __FUNCTION__ << std::endl;
+        return false;
+    }
+    return true;
+}
+
+bool t04()
+{
+    auto text1 = R"({"a": true, "b": "abc"})";
+    jsonio::json json1;
+    std::istringstream { text1 } >> json1;
+    jsonio::json json2;
+    auto text2 = R"({"aa": false, "b": [["1"]]})";
+    std::istringstream { text2 } >> json2;
+    json1.steal(json2, true);
+    std::ostringstream os;
+    os << json1;
+    auto arr = os.str();
+    std::regex pattern{"\r|\n|\t"};
+    std::string out;
+    std::regex_replace(std::back_insert_iterator(out), arr.begin(), arr.end(), pattern, "");
+    auto text3 = R"({"a": true,"b": "1"})";
     if (!json1.completed() || json1.get_type() != jsonio::JsonType::J_OBJECT || out != text3)
     {
         std::cerr << __FUNCTION__ << std::endl;
@@ -88,6 +112,7 @@ int main()
         t01() &&
         t02() &&
         t03() &&
+        t04() &&
         true)
     {
         return 0;

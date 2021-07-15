@@ -105,14 +105,14 @@ public:
         return PARENT_TYPE::find(key)->second;
     }
 
-    void steal(const json_object& source)
+    void steal(const json_object& source, bool convert)
     {
         for (auto& [key, value] : *this)
         {
             auto source_node = source.find(key);
             if (source_node != source.end())
             {
-                value.steal(source_node->second);
+                value.steal(source_node->second, convert);
             }
         }
     }

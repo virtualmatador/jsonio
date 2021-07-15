@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cmath>
 #include <iomanip>
 #include <limits>
 #include <memory>
@@ -490,34 +491,258 @@ const jsonio::json* jsonio::json::get_value(const std::string & key) const
     return nullptr;
 }
 
-void jsonio::json::steal(const json & source)
+void jsonio::json::steal(const json & source, bool convert)
 {
-    if (get_type() == source.get_type())
+    switch (get_type())
     {
-        switch (get_type())
+    case JsonType::J_NULL :
+        switch (source.get_type())
         {
-        case JsonType::J_NULL :
+        case JsonType::J_NULL:
             get_null() = source.get_null();
             break;
-        case JsonType::J_STRING :
-            get_string() = source.get_string();
-            break;
-        case JsonType::J_LONG :
-            get_long() = source.get_long();
-            break;
-        case JsonType::J_DOUBLE :
-            get_double() = source.get_double();
-            break;
-        case JsonType::J_BOOL :
-            get_bool() = source.get_bool();
-            break;
-        case JsonType::J_ARRAY :
-            get_array() = source.get_array();
-            break;
-        case JsonType::J_OBJECT :
-            get_object().steal(source.get_object());
+        case JsonType::J_ARRAY:
+            if (convert)
+            {
+                if (source.get_array().size() == 1)
+                {
+                    steal(source.get_array()[0], convert);
+                }
+            }
             break;
         }
+        break;
+    case JsonType::J_STRING :
+        switch (source.get_type())
+        {
+        case JsonType::J_NULL:
+            if (convert)
+            {
+                get_string() = "null";
+            }
+            break;
+        case JsonType::J_STRING:
+            get_string() = source.get_string();
+            break;
+        case JsonType::J_LONG:
+            if (convert)
+            {
+                std::ostringstream os;
+                os << source.get_long();
+                get_string() = os.str();
+            }
+            break;
+        case JsonType::J_DOUBLE:
+            if (convert)
+            {
+                std::ostringstream os;
+                os << source.get_double();
+                get_string() = os.str();
+            }
+            break;
+        case JsonType::J_BOOL:
+            if (convert)
+            {
+                get_string() = source.get_bool() ? "true" : "false";
+            }
+            break;
+        case JsonType::J_ARRAY:
+            if (convert)
+            {
+                if (source.get_array().size() == 1)
+                {
+                    steal(source.get_array()[0], convert);
+                }
+            }
+            break;
+        }
+        break;
+    case JsonType::J_LONG :
+        switch (source.get_type())
+        {
+        case JsonType::J_STRING:
+            if (convert)
+            {
+                char* progress;
+                auto d = std::strtod(source.get_string().c_str(), &progress);
+                if (*progress == *source.get_string().end())
+                {
+                    if (d == std::round(d))
+                    {
+                        std::ostringstream os;
+                        os << d;
+                        if (source.get_string() == os.str())
+                        {
+                            get_long() = d;
+                        }
+                    }
+                }
+            }
+            break;
+        case JsonType::J_LONG:
+            get_long() = source.get_long();
+            break;
+        case JsonType::J_DOUBLE:
+            if (convert)
+            {
+                if (source.get_double() == std::round(source.get_double()))
+                {
+                    get_long() = (long)source.get_double();
+                }
+            }
+            break;
+        case JsonType::J_BOOL:
+            if (convert)
+            {
+                get_long() = source.get_bool() ? 1 : 0;
+            }
+            break;
+        case JsonType::J_ARRAY:
+            if (convert)
+            {
+                if (source.get_array().size() == 1)
+                {
+                    steal(source.get_array()[0], convert);
+                }
+            }
+            break;
+        }
+        break;
+    case JsonType::J_DOUBLE :
+        switch (source.get_type())
+        {
+        case JsonType::J_STRING:
+            if (convert)
+            {
+                char* progress;
+                auto d = std::strtod(source.get_string().c_str(), &progress);
+                if (*progress == *source.get_string().end())
+                {
+                    std::ostringstream os;
+                    os << d;
+                    if (source.get_string() == os.str())
+                    {
+                        get_double() = d;
+                    }
+                }
+            }
+            break;
+        case JsonType::J_LONG:
+            if (convert)
+            {
+                get_double() = source.get_long();
+            }
+            break;
+        case JsonType::J_DOUBLE:
+            get_double() = source.get_double();
+            break;
+        case JsonType::J_BOOL:
+            if (convert)
+            {
+                get_double() = source.get_bool() ? 1.0 : 0.0;
+            }
+            break;
+        case JsonType::J_ARRAY:
+            if (convert)
+            {
+                if (source.get_array().size() == 1)
+                {
+                    steal(source.get_array()[0], convert);
+                }
+            }
+            break;
+        }
+        break;
+    case JsonType::J_BOOL :
+        switch (source.get_type())
+        {
+        case JsonType::J_STRING:
+            if (convert)
+            {
+                std::string l_source;
+                std::transform(source.get_string().begin(),
+                    source.get_string().end(), std::back_inserter(l_source),
+                    [](auto c){ return std::tolower(c); } );
+                if (l_source == "0" || l_source == "false" ||
+                    l_source == "no" || l_source == "off")
+                {
+                    get_bool() = false;
+                }
+                else if (l_source == "1" || l_source == "true" ||
+                    l_source == "yes" || l_source == "on")
+                {
+                    get_bool() = true;
+                }
+            }
+            break;
+        case JsonType::J_LONG:
+            if (convert)
+            {
+                if (source.get_long() == 0)
+                {
+                    get_bool() = false;
+                }
+                else if (source.get_long() == 1)
+                {
+                    get_bool() = true;
+                }
+            }
+            break;
+        case JsonType::J_DOUBLE:
+            if (convert)
+            {
+                if (source.get_double() == 0.0)
+                {
+                    get_bool() = false;
+                }
+                else if (source.get_double() == 1.0)
+                {
+                    get_bool() = true;
+                }
+            }
+            break;
+        case JsonType::J_BOOL:
+            get_bool() = source.get_bool();
+            break;
+        case JsonType::J_ARRAY:
+            if (convert)
+            {
+                if (source.get_array().size() == 1)
+                {
+                    steal(source.get_array()[0], convert);
+                }
+            }
+            break;
+        }
+        break;
+    case JsonType::J_ARRAY :
+        switch (source.get_type())
+        {
+        case JsonType::J_NULL:
+        case JsonType::J_STRING:
+        case JsonType::J_LONG:
+        case JsonType::J_DOUBLE:
+        case JsonType::J_BOOL:
+        case JsonType::J_OBJECT:
+            if (convert)
+            {
+                get_array().clear();
+                get_array().push_back(source);
+            }
+            break;
+        case JsonType::J_ARRAY:
+            get_array() = source.get_array();
+            break;
+        }
+        break;
+    case JsonType::J_OBJECT :
+        switch (source.get_type())
+        {
+        case JsonType::J_OBJECT:
+            get_object().steal(source.get_object(), convert);
+            break;
+        }
+        break;
     }
 }
 
