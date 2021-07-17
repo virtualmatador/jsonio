@@ -756,12 +756,12 @@ void* const & jsonio::json::get_null() const
     return std::get<void*>(*this);
 }
 
-jsonio::json_string & jsonio::json::get_string()
+std::string & jsonio::json::get_string()
 {
-    return const_cast<json_string &>(static_cast<const json &>(*this).get_string());
+    return const_cast<std::string&>(static_cast<const json &>(*this).get_string());
 }
 
-const jsonio::json_string & jsonio::json::get_string() const
+const std::string & jsonio::json::get_string() const
 {
     return std::get<json_string>(*this);
 }

@@ -94,8 +94,8 @@ public:
 
     void* & get_null();
     void* const & get_null() const;
-    json_string & get_string();
-    const json_string & get_string() const;
+    std::string & get_string();
+    const std::string & get_string() const;
     long & get_long();
     const long & get_long() const;
     double & get_double();
