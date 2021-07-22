@@ -82,6 +82,9 @@ public:
 
     ~json() noexcept;
 
+    void steal(const json & source, bool convert);
+    void clear();
+
     bool completed() const;
 
     JsonType get_type() const;
@@ -90,7 +93,6 @@ public:
     json & operator[](size_t index);
     const json & operator[](size_t index) const;
     const json* get_value(const std::string & key) const;
-    void steal(const json & source, bool convert);
 
     void* & get_null();
     void* const & get_null() const;
