@@ -15,6 +15,11 @@ jsonio::json_string::json_string(std::string && text) noexcept
     *this = std::move(text);
 }
 
+jsonio::json_string::json_string(const char* text) noexcept
+{
+    *this = text;
+}
+
 jsonio::json_string::json_string(const jsonio::json_string & source) noexcept
 {
     *this = source;
@@ -50,14 +55,7 @@ jsonio::json_string & jsonio::json_string::operator=(const std::string & text) n
 {
     flags_ = PHASE_COMPLETED;
     std::string::operator=(text);
-    for (auto source : *(std::string*)this)
-    {
-        if (Escape(source) != '\0')
-        {
-            flags_ |= ESCAPED;
-            break;
-        }
-    }
+    check_escape();
     return *this;
 }
 
@@ -65,14 +63,15 @@ jsonio::json_string & jsonio::json_string::operator=(std::string && text) noexce
 {
     flags_ = PHASE_COMPLETED;
     std::string::operator=(std::move(text));
-    for (auto source : *(std::string*)this)
-    {
-        if (Escape(source) != '\0')
-        {
-            flags_ |= ESCAPED;
-            break;
-        }
-    }
+    check_escape();
+    return *this;
+}
+
+jsonio::json_string & jsonio::json_string::operator=(const char* text) noexcept
+{
+    flags_ = PHASE_COMPLETED;
+    std::string::operator=(text);
+    check_escape();
     return *this;
 }
 
@@ -83,6 +82,18 @@ jsonio::json_string::~json_string() noexcept
 bool jsonio::json_string::completed() const
 {
     return (flags_ & MASK_PHASE) == PHASE_COMPLETED;
+}
+
+void jsonio::json_string::check_escape()
+{
+    for (auto source : *(std::string*)this)
+    {
+        if (Escape(source) != '\0')
+        {
+            flags_ |= ESCAPED;
+            break;
+        }
+    }
 }
 
 void jsonio::json_string::read(std::istream & is)
@@ -110,6 +121,7 @@ void jsonio::json_string::read(std::istream & is)
                 {
                     flags_ &= ~ESCAPING;
                     flags_ |= ESCAPED;
+                    append(1, source);
                 }
                 else
                 {
@@ -191,10 +203,10 @@ char jsonio::json_string::Unescape(const char source)
         break;
     case '\"':
         return '\"';
-        break;        
+        break;
     case '\\':
         return '\\';
-        break;        
+        break;
     }
     return '\0';
 }
@@ -220,10 +232,10 @@ char jsonio::json_string::Escape(const char source)
             break;
         case '\"':
             return '\"';
-            break;        
+            break;
         case '\\':
             return '\\';
-            break;        
+            break;
     }
     return '\0';
 }

@@ -36,17 +36,20 @@ public:
     json_string() noexcept;
     json_string(const std::string & text) noexcept;
     json_string(std::string && text) noexcept;
+    json_string(const char* text) noexcept;
     json_string(const json_string & source) noexcept;
     json_string(json_string && source) noexcept;
     json_string & operator=(const std::string & text) noexcept;
     json_string & operator=(std::string && text) noexcept;
+    json_string & operator=(const char* text) noexcept;
     json_string & operator=(const json_string & source) noexcept;
     json_string & operator=(json_string && source) noexcept;
     ~json_string() noexcept;
-    
+
     bool completed() const;
 
 private:
+    void check_escape();
     void read(std::istream & is);
     void write(std::ostream & os) const;
 

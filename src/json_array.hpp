@@ -75,7 +75,7 @@ public:
     ~json_array() noexcept
     {
     }
-    
+
     bool completed() const
     {
         return (flags_ & MASK_PHASE) == PHASE_COMPLETED;
