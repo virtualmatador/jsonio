@@ -12,7 +12,7 @@ template<class json>
 class json_array : public std::vector<json>
 {
 private:
-    using ARRAY_TYPE = std::vector<json>;
+    using PARENT_TYPE = std::vector<json>;
     unsigned int flags_;
     std::unique_ptr<json> value_;
 
@@ -26,7 +26,7 @@ public:
 
 public:
     json_array() noexcept
-        : flags_{PHASE_START}
+        : flags_{PHASE_COMPLETED}
         , value_{std::make_unique<json>()}
     {
     }
@@ -53,7 +53,7 @@ public:
     {
         if (this != &source)
         {
-            ARRAY_TYPE::operator=(*(ARRAY_TYPE*)&source);
+            PARENT_TYPE::operator=(*(PARENT_TYPE*)&source);
             flags_ = source.flags_;
             *value_ = *source.value_;
         }
@@ -64,7 +64,7 @@ public:
     {
         if (this != &source)
         {
-            ARRAY_TYPE::operator=(std::move(*(ARRAY_TYPE*)&source));
+            PARENT_TYPE::operator=(std::move(*(PARENT_TYPE*)&source));
             flags_ = source.flags_;
             source.flags_ = PHASE_START;
             *value_ = std::move(*source.value_);
@@ -88,7 +88,7 @@ public:
 
     const json & operator[](size_t index) const
     {
-        return ARRAY_TYPE::operator[](index);
+        return PARENT_TYPE::operator[](index);
     }
 
     void read(std::istream & is)
@@ -134,7 +134,7 @@ public:
                 {
                     if ((value_->flags_ & json::EMPTY_VALUE) == 0)
                     {
-                        ARRAY_TYPE::push_back(std::move(*value_));
+                        PARENT_TYPE::push_back(std::move(*value_));
                     }
                     if (delimiters[delimiter] == ']')
                     {

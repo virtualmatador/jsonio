@@ -37,7 +37,7 @@ public:
 
 public:
     json_object() noexcept
-        : flags_{PHASE_START}
+        : flags_{PHASE_COMPLETED}
         , value_{std::make_unique<json>()}
     {
     }
