@@ -46,7 +46,7 @@ bool t02()
 
 bool t03()
 {
-    auto text = "{\"key1\": {\"name\": \"Bob\"},\"key2\": [2154734578,-1234567890],\"key3\": null}";
+    auto text = "{\"key1\":{\"name\": \"Bob\"},\"key2\":[2154734578,-1234567890],\"key3\": null}";
     jsonio::json json;
     std::istringstream is{text};
     is >> json;

@@ -64,7 +64,7 @@ bool t03()
     jsonio::json json1;
     std::istringstream { text1 } >> json1;
     jsonio::json json2;
-    auto text2 = R"({"aa": false, "b": ["1", "2", {}]})";
+    auto text2 = R"({"aa": false, "b":["1", "2", {}]})";
     std::istringstream { text2 } >> json2;
     json1.steal(json2, false);
     std::ostringstream os;
@@ -73,7 +73,7 @@ bool t03()
     std::regex pattern{"\r|\n|\t"};
     std::string out;
     std::regex_replace(std::back_insert_iterator(out), arr.begin(), arr.end(), pattern, "");
-    auto text3 = R"({"a": true,"b": ["1","2",{}]})";
+    auto text3 = R"({"a": true,"b":["1","2",{}]})";
     if (!json1.completed() || json1.get_type() != jsonio::JsonType::J_OBJECT || out != text3)
     {
         std::cerr << __FUNCTION__ << std::endl;

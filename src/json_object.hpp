@@ -276,7 +276,7 @@ public:
                 {
                     os << '\t';
                 }
-                os << '\"' << key << "\": ";
+                os << '\"' << key << "\":";
                 int sub_indents;
                 if (value.index() == size_t(JsonType::J_ARRAY) ||
                     value.index() == size_t(JsonType::J_OBJECT))
@@ -286,6 +286,7 @@ public:
                 }
                 else
                 {
+                    os << " ";
                     sub_indents = 0;
                 }
                 value.write(os, sub_indents);
