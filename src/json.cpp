@@ -56,22 +56,22 @@ jsonio::json::json(const bool & bool_value)
     *this = bool_value;
 }
 
-jsonio::json::json(const json_object<json> & json_object_value)
+jsonio::json::json(const json_obj & json_object_value)
 {
     *this = json_object_value;
 }
 
-jsonio::json::json(json_object<json> && json_object_value)
+jsonio::json::json(json_obj && json_object_value)
 {
     *this = std::move(json_object_value);
 }
 
-jsonio::json::json(const json_array<json> & json_array_value)
+jsonio::json::json(const json_arr & json_array_value)
 {
     *this = json_array_value;
 }
 
-jsonio::json::json(json_array<json> && json_array_value)
+jsonio::json::json(json_arr && json_array_value)
 {
     *this = std::move(json_array_value);
 }
@@ -98,10 +98,10 @@ jsonio::json & jsonio::json::operator=(const jsonio::json & source) noexcept
             PARENT_TYPE::operator=(std::get<bool>(*(PARENT_TYPE*)&source));
             break;
         case JsonType::J_ARRAY:
-            PARENT_TYPE::operator=(std::get<json_array<json>>(*(PARENT_TYPE*)&source));
+            PARENT_TYPE::operator=(std::get<json_arr>(*(PARENT_TYPE*)&source));
             break;
         case JsonType::J_OBJECT:
-            PARENT_TYPE::operator=(std::get<json_object<json>>(*(PARENT_TYPE*)&source));
+            PARENT_TYPE::operator=(std::get<json_obj>(*(PARENT_TYPE*)&source));
             break;
         }
         flags_ = source.flags_;
@@ -132,10 +132,10 @@ jsonio::json & jsonio::json::operator=(jsonio::json && source) noexcept
             PARENT_TYPE::operator=(std::move(std::get<bool>(*(PARENT_TYPE*)&source)));
             break;
         case JsonType::J_ARRAY:
-            PARENT_TYPE::operator=(std::move(std::get<json_array<json>>(*(PARENT_TYPE*)&source)));
+            PARENT_TYPE::operator=(std::move(std::get<json_arr>(*(PARENT_TYPE*)&source)));
             break;
         case JsonType::J_OBJECT:
-            PARENT_TYPE::operator=(std::move(std::get<json_object<json>>(*(PARENT_TYPE*)&source)));
+            PARENT_TYPE::operator=(std::move(std::get<json_obj>(*(PARENT_TYPE*)&source)));
             break;
         }
         flags_ = source.flags_;
@@ -194,28 +194,28 @@ jsonio::json & jsonio::json::operator=(const bool & bool_value)
     return *this;
 }
 
-jsonio::json & jsonio::json::operator=(const jsonio::json_object<json> & json_object_value)
+jsonio::json & jsonio::json::operator=(const jsonio::json_obj & json_object_value)
 {
     PARENT_TYPE::operator=(json_object_value);
     flags_ = PHASE_COMPLETED;
     return *this;
 }
 
-jsonio::json & jsonio::json::operator=(jsonio::json_object<json> && json_object_value)
+jsonio::json & jsonio::json::operator=(jsonio::json_obj && json_object_value)
 {
     PARENT_TYPE::operator=(std::move(json_object_value));
     flags_ = PHASE_COMPLETED;
     return *this;
 }
 
-jsonio::json & jsonio::json::operator=(const jsonio::json_array<json> & json_array_value)
+jsonio::json & jsonio::json::operator=(const jsonio::json_arr & json_array_value)
 {
     PARENT_TYPE::operator=(json_array_value);
     flags_ = PHASE_COMPLETED;
     return *this;
 }
 
-jsonio::json & jsonio::json::operator=(jsonio::json_array<json> && json_array_value)
+jsonio::json & jsonio::json::operator=(jsonio::json_arr && json_array_value)
 {
     PARENT_TYPE::operator=(std::move(json_array_value));
     flags_ = PHASE_COMPLETED;
@@ -517,13 +517,13 @@ size_t jsonio::json::read(std::istream & is, const std::string & delimiters)
                 {
                     flags_ &= ~MASK_PHASE;
                     flags_ |= PHASE_OBJECT;
-                    PARENT_TYPE::operator=(json_object<json>(json_object<json>::SKIP_PREFIX));
+                    PARENT_TYPE::operator=(json_obj(json_obj::SKIP_PREFIX));
                 }
                 else if (source == '[')
                 {
                     flags_ &= ~MASK_PHASE;
                     flags_ |= PHASE_ARRAY;
-                    PARENT_TYPE::operator=(json_array<json>(json_array<json>::SKIP_PREFIX));
+                    PARENT_TYPE::operator=(json_arr(json_arr::SKIP_PREFIX));
                 }
                 else if (source == '\"')
                 {
@@ -544,7 +544,7 @@ size_t jsonio::json::read(std::istream & is, const std::string & delimiters)
     }
     if ((flags_ & MASK_PHASE) == PHASE_OBJECT)
     {
-        std::get<json_object<json>>(*this).read(is);
+        std::get<json_obj>(*this).read(is);
         if (is.good())
         {
             flags_ &= ~MASK_PHASE;
@@ -553,7 +553,7 @@ size_t jsonio::json::read(std::istream & is, const std::string & delimiters)
     }
     if ((flags_ & MASK_PHASE) == PHASE_ARRAY)
     {
-        std::get<json_array<json>>(*this).read(is);
+        std::get<json_arr>(*this).read(is);
         if (is.good())
         {
             flags_ &= ~MASK_PHASE;
@@ -706,10 +706,10 @@ void jsonio::json::write(std::ostream & os, int indents) const
             os << (get_bool() ? "true" : "false");
             break;
         case JsonType::J_ARRAY:
-            std::get<json_array<json>>(*this).write(os, indents);
+            std::get<json_arr>(*this).write(os, indents);
             break;
         case JsonType::J_OBJECT:
-            std::get<json_object<json>>(*this).write(os, indents);
+            std::get<json_obj>(*this).write(os, indents);
             break;
         }
     }
@@ -728,7 +728,7 @@ jsonio::json & jsonio::json::operator[](const std::string & key)
 
 const jsonio::json & jsonio::json::operator[](const std::string & key) const
 {
-    return std::get<json_object<json>>(*this).operator[](key);
+    return std::get<json_obj>(*this).operator[](key);
 }
 
 jsonio::json & jsonio::json::operator[](size_t index)
@@ -739,13 +739,13 @@ jsonio::json & jsonio::json::operator[](size_t index)
 
 const jsonio::json & jsonio::json::operator[](size_t index) const
 {
-    return std::get<json_array<json>>(*this).operator[](index);
+    return std::get<json_arr>(*this).operator[](index);
 }
 
 const jsonio::json* jsonio::json::get_value(const std::string & key) const
 {
-    auto it = std::get<json_object<json>>(*this).find(key);
-    if (it != std::get<json_object<json>>(*this).end())
+    auto it = std::get<json_obj>(*this).find(key);
+    if (it != std::get<json_obj>(*this).end())
     {
         return &it->second;
     }
@@ -802,24 +802,24 @@ const bool & jsonio::json::get_bool() const
     return std::get<bool>(*this);
 }
 
-jsonio::json_object<jsonio::json> & jsonio::json::get_object()
+jsonio::json_obj & jsonio::json::get_object()
 {
-    return const_cast<jsonio::json_object<json> &>(static_cast<const json &>(*this).get_object());
+    return const_cast<jsonio::json_obj &>(static_cast<const json &>(*this).get_object());
 }
 
-const jsonio::json_object<jsonio::json> & jsonio::json::get_object() const
+const jsonio::json_obj & jsonio::json::get_object() const
 {
-    return std::get<json_object<json>>(*this);
+    return std::get<json_obj>(*this);
 }
 
-jsonio::json_array<jsonio::json> & jsonio::json::get_array()
+jsonio::json_arr & jsonio::json::get_array()
 {
-    return const_cast<json_array<json> &>(static_cast<const json &>(*this).get_array());
+    return const_cast<json_arr &>(static_cast<const json &>(*this).get_array());
 }
 
-const jsonio::json_array<jsonio::json> & jsonio::json::get_array() const
+const jsonio::json_arr & jsonio::json::get_array() const
 {
-    return std::get<json_array<json>>(*this);
+    return std::get<json_arr>(*this);
 }
 
 std::istream & jsonio::operator>>(std::istream & is, jsonio::json & target)
@@ -834,25 +834,25 @@ std::ostream & jsonio::operator<<(std::ostream & os, const jsonio::json & source
     return os;
 }
 
-template<> std::istream & jsonio::operator>>(std::istream & is, jsonio::json_array<json> & target)
+template<> std::istream & jsonio::operator>>(std::istream & is, jsonio::json_arr & target)
 {
     target.read(is);
     return is;
 }
 
-template<> std::ostream & jsonio::operator<<(std::ostream & os, const jsonio::json_array<json> & source)
+template<> std::ostream & jsonio::operator<<(std::ostream & os, const jsonio::json_arr & source)
 {
     source.write(os, 0);
     return os;
 }
 
-template<> std::istream & jsonio::operator>>(std::istream & is, jsonio::json_object<json> & target)
+template<> std::istream & jsonio::operator>>(std::istream & is, jsonio::json_obj & target)
 {
     target.read(is);
     return is;
 }
 
-template<> std::ostream & jsonio::operator<<(std::ostream & os, const jsonio::json_object<json> & source)
+template<> std::ostream & jsonio::operator<<(std::ostream & os, const jsonio::json_obj & source)
 {
     source.write(os, 0);
     return os;

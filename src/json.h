@@ -13,7 +13,7 @@
 namespace jsonio
 {
 
-template<class json>
+template<class J>
 using VARIANT_TYPE = std::variant
 <
     void*,
@@ -21,9 +21,14 @@ using VARIANT_TYPE = std::variant
     long,
     double,
     bool,
-    json_array<json>,
-    json_object<json>
+    json_array<J>,
+    json_object<J>
 >;
+
+class json;
+
+using json_obj = json_object<json>;
+using json_arr = json_array<json>;
 
 class json : public VARIANT_TYPE<json>
 {
@@ -60,10 +65,10 @@ public:
     json(const long & long_value);
     json(const double & double_value);
     json(const bool & bool_value);
-    json(const json_object<json> & json_object_value);
-    json(json_object<json> && json_object_value);
-    json(const json_array<json> & json_array_value);
-    json(json_array<json> && json_array_value);
+    json(const json_obj & json_object_value);
+    json(json_obj && json_object_value);
+    json(const json_arr & json_array_value);
+    json(json_arr && json_array_value);
 
     json & operator=(const json & source) noexcept;
     json & operator=(json && source) noexcept;
@@ -75,10 +80,10 @@ public:
     json & operator=(const long & long_value);
     json & operator=(const double & double_value);
     json & operator=(const bool & bool_value);
-    json & operator=(const json_object<json> & json_object_value);
-    json & operator=(json_object<json> && json_object_value);
-    json & operator=(const json_array<json> & json_array_value);
-    json & operator=(json_array<json> && json_array_value);
+    json & operator=(const json_obj & json_object_value);
+    json & operator=(json_obj && json_object_value);
+    json & operator=(const json_arr & json_array_value);
+    json & operator=(json_arr && json_array_value);
 
     ~json() noexcept;
 
@@ -104,10 +109,10 @@ public:
     const double & get_double() const;
     bool & get_bool();
     const bool & get_bool() const;
-    json_object<json> & get_object();
-    const json_object<json> & get_object() const;
-    json_array<json> & get_array();
-    const json_array<json> & get_array() const;
+    json_obj & get_object();
+    const json_obj & get_object() const;
+    json_arr & get_array();
+    const json_arr & get_array() const;
 
 public:
     friend class json_array<json>;
