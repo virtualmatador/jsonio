@@ -257,8 +257,13 @@ public:
     {
         if (completed())
         {
-            for (int i = 0; i < indents; ++i)
-                os << '\t';
+            if (!(os.flags() & std::ios_base::skipws))
+            {
+                for (int i = 0; i < indents; ++i)
+                {
+                    os << '\t';
+                }
+            }
             os << '{';
             bool comma = false;
             for (const auto& [key, value] : *this)
@@ -271,30 +276,40 @@ public:
                 {
                     comma = true;
                 }
-                os << std::endl;
-                for (int i = 0; i < indents + 1; ++i)
+                if (!(os.flags() & std::ios_base::skipws))
                 {
-                    os << '\t';
+                    os << std::endl;
+                    for (int i = 0; i < indents + 1; ++i)
+                    {
+                        os << '\t';
+                    }
                 }
                 os << '\"' << key << "\":";
-                int sub_indents;
                 if (value.index() == size_t(JsonType::J_ARRAY) ||
                     value.index() == size_t(JsonType::J_OBJECT))
                 {
-                    os << std::endl;
-                    sub_indents = indents + 1;
+                    if (!(os.flags() & std::ios_base::skipws))
+                    {
+                        os << std::endl;
+                    }
+                    value.write(os, indents + 1);
                 }
                 else
                 {
-                    os << " ";
-                    sub_indents = 0;
+                    if (!(os.flags() & std::ios_base::skipws))
+                    {
+                        os << " ";
+                    }
+                    value.write(os, 0);
                 }
-                value.write(os, sub_indents);
             }
-            os << std::endl;
-            for (int i = 0; i < indents; ++i)
+            if (!(os.flags() & std::ios_base::skipws))
             {
-                os << '\t';
+                os << std::endl;
+                for (int i = 0; i < indents; ++i)
+                {
+                    os << '\t';
+                }
             }
             os << '}';
         }

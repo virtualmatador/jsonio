@@ -24,12 +24,10 @@ bool t01()
     json["k"].get_array().push_back(jsonio::json_obj());
     std::ostringstream os;
     os << json;
-    auto arr = os.str();
-    std::regex pattern{"\r|\n|\t| "};
-    std::string out;
-    std::regex_replace(std::back_insert_iterator(out), arr.begin(), arr.end(), pattern, "");
-    auto expected = R"({"a":"b","c":123,"e":{"f":true},"g":["h"],"i":{"j":0.5},"k":[{}]})";
-    if (!json.completed() || json.get_type() != jsonio::JsonType::J_OBJECT || out != expected)
+    auto expected =
+        R"({"a":"b","c":123,"e":{"f":true},"g":["h"],"i":{"j":0.5},"k":[{}]})";
+    if (!json.completed() || json.get_type() != jsonio::JsonType::J_OBJECT ||
+        os.str() != expected)
     {
         std::cerr << __FUNCTION__ << std::endl;
         return false;

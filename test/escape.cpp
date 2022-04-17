@@ -13,10 +13,8 @@ bool t01()
     std::ostringstream os;
     os << json;
     auto arr = os.str();
-    std::regex pattern{"\r|\n|\t| "};
-    std::string out;
-    std::regex_replace(std::back_insert_iterator(out), arr.begin(), arr.end(), pattern, "");
-    if (!json.completed() || json.get_type() != jsonio::JsonType::J_OBJECT || out != text)
+    if (!json.completed() || json.get_type() != jsonio::JsonType::J_OBJECT ||
+        os.str() != text)
     {
         std::cerr << __FUNCTION__ << std::endl;
         return false;
@@ -33,11 +31,8 @@ bool t02()
     json["k"] = "a\nb";
     std::ostringstream os;
     os << json;
-    auto arr = os.str();
-    std::regex pattern{"\r|\n|\t| "};
-    std::string out;
-    std::regex_replace(std::back_insert_iterator(out), arr.begin(), arr.end(), pattern, "");
-    if (!json.completed() || json.get_type() != jsonio::JsonType::J_OBJECT || out != text)
+    if (!json.completed() || json.get_type() != jsonio::JsonType::J_OBJECT ||
+        os.str() != text)
     {
         std::cerr << __FUNCTION__ << std::endl;
         return false;

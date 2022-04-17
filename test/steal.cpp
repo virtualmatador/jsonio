@@ -45,12 +45,9 @@ bool t02()
     json1.steal(json2, false);
     std::ostringstream os;
     os << json1;
-    auto arr = os.str();
-    std::regex pattern{"\r|\n|\t"};
-    std::string out;
-    std::regex_replace(std::back_insert_iterator(out), arr.begin(), arr.end(), pattern, "");
-    auto text3 = R"({"a": false,"b": true})";
-    if (!json1.completed() || json1.get_type() != jsonio::JsonType::J_OBJECT || out != text3)
+    auto text3 = R"({"a":false,"b":true})";
+    if (!json1.completed() || json1.get_type() != jsonio::JsonType::J_OBJECT ||
+        os.str() != text3)
     {
         std::cerr << __FUNCTION__ << std::endl;
         return false;
@@ -69,12 +66,9 @@ bool t03()
     json1.steal(json2, false);
     std::ostringstream os;
     os << json1;
-    auto arr = os.str();
-    std::regex pattern{"\r|\n|\t"};
-    std::string out;
-    std::regex_replace(std::back_insert_iterator(out), arr.begin(), arr.end(), pattern, "");
-    auto text3 = R"({"a": true,"b":["1","2",{}]})";
-    if (!json1.completed() || json1.get_type() != jsonio::JsonType::J_OBJECT || out != text3)
+    auto text3 = R"({"a":true,"b":["1","2",{}]})";
+    if (!json1.completed() || json1.get_type() != jsonio::JsonType::J_OBJECT ||
+        os.str() != text3)
     {
         std::cerr << __FUNCTION__ << std::endl;
         return false;

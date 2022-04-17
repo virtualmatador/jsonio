@@ -12,11 +12,8 @@ bool t01()
     is >> json;
     std::ostringstream os;
     os << json;
-    auto arr = os.str();
-    std::regex pattern{"\r|\n|\t"};
-    std::string out;
-    std::regex_replace(std::back_insert_iterator(out), arr.begin(), arr.end(), pattern, "");
-    if (!json.completed() || json.get_type() != jsonio::JsonType::J_ARRAY || out != text)
+    if (!json.completed() || json.get_type() != jsonio::JsonType::J_ARRAY ||
+        os.str() != text)
     {
         std::cerr << __FUNCTION__ << std::endl;
         return false;
@@ -26,17 +23,15 @@ bool t01()
 
 bool t02()
 {
-    auto text = "{\"key1\": \"value s\",\"key2\": 1363}";
+    auto text = "{\"key1\":\"value s\",\"key2\":1363}";
     jsonio::json json;
     std::istringstream is{text};
     is >> json;
     std::ostringstream os;
     os << json;
     auto arr = os.str();
-    std::regex pattern{"\r|\n|\t"};
-    std::string out;
-    std::regex_replace(std::back_insert_iterator(out), arr.begin(), arr.end(), pattern, "");
-    if (!json.completed() || json.get_type() != jsonio::JsonType::J_OBJECT || out != text)
+    if (!json.completed() || json.get_type() != jsonio::JsonType::J_OBJECT ||
+        os.str() != text)
     {
         std::cerr << __FUNCTION__ << std::endl;
         return false;
@@ -46,19 +41,17 @@ bool t02()
 
 bool t03()
 {
-    auto text = "{\"key1\":{\"name\": \"Bob\"},\"key2\":[2154734578,-1234567890],\"key3\": null}";
+    auto text = "{\"key1\":{\"name\":\"Bob\"},"
+        "\"key2\":[2154734578,-1234567890],\"key3\":null}";
     jsonio::json json;
     std::istringstream is{text};
     is >> json;
     std::ostringstream os;
     os << json;
-    auto arr = os.str();
-    std::regex pattern{"\r|\n|\t"};
-    std::string out;
-    std::regex_replace(std::back_insert_iterator(out), arr.begin(), arr.end(), pattern, "");
-    if (!json.completed() || json.get_type() != jsonio::JsonType::J_OBJECT || out != text)
+    if (!json.completed() || json.get_type() != jsonio::JsonType::J_OBJECT ||
+        os.str() != text)
     {
-        std::cerr << out << __FUNCTION__ << std::endl;
+        std::cerr << __FUNCTION__ << std::endl;
         return false;
     }
     return true;

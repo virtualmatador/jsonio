@@ -160,8 +160,13 @@ public:
     {
         if (completed())
         {
-            for (int i = 0; i < indents; ++i)
-                os << '\t';
+            if (!(os.flags() & std::ios_base::skipws))
+            {
+                for (int i = 0; i < indents; ++i)
+                {
+                    os << '\t';
+                }
+            }
             os << "[";
             bool comma = false;
             for (const auto & sub_JsonValue : *this)
@@ -176,14 +181,24 @@ public:
                     {
                         comma = true;
                     }
-                    os << std::endl;
-                    sub_JsonValue.write(os, indents + 1);
+                    if (!(os.flags() & std::ios_base::skipws))
+                    {
+                        os << std::endl;
+                        sub_JsonValue.write(os, indents + 1);
+                    }
+                    else
+                    {
+                        sub_JsonValue.write(os, 0);
+                    }
                 }
             }
-            os << std::endl;
-            for (int i = 0; i < indents; ++i)
+            if (!(os.flags() & std::ios_base::skipws))
             {
-                os << '\t';
+                os << std::endl;
+                for (int i = 0; i < indents; ++i)
+                {
+                    os << '\t';
+                }
             }
             os << "]";
         }
