@@ -15,7 +15,9 @@ bool t01()
     json1.steal(json2, false);
     std::ostringstream os1;
     os1 << json1;
-    if (!json1.completed() || json1.get_type() != jsonio::JsonType::J_LONG || os1.str() != text2)
+    if (!json1.completed() ||
+        json1.type() != jsonio::JsonType::J_LONG ||
+        os1.str() != text2)
     {
         std::cerr << __FUNCTION__ << std::endl;
         return false;
@@ -26,7 +28,9 @@ bool t01()
     json1.steal(json3, false);
     std::ostringstream os2;
     os2 << json1;
-    if (!json1.completed() || json1.get_type() != jsonio::JsonType::J_LONG || os2.str() != text2)
+    if (!json1.completed() ||
+        json1.type() != jsonio::JsonType::J_LONG ||
+        os2.str() != text2)
     {
         std::cerr << __FUNCTION__ << std::endl;
         return false;
@@ -47,7 +51,8 @@ bool t02()
     os << json1;
     auto arr = os.str();
     auto text3 = R"({"a":false,"b":true})";
-    if (!json1.completed() || json1.get_type() != jsonio::JsonType::J_OBJECT ||
+    if (!json1.completed() ||
+        json1.type() != jsonio::JsonType::J_OBJECT ||
         os.str() != text3)
     {
         std::cerr << __FUNCTION__ << std::endl;
@@ -68,7 +73,8 @@ bool t03()
     std::ostringstream os;
     os << json1;
     auto text3 = R"({"a":true,"b":["1"]})";
-    if (!json1.completed() || json1.get_type() != jsonio::JsonType::J_OBJECT ||
+    if (!json1.completed() ||
+        json1.type() != jsonio::JsonType::J_OBJECT ||
         os.str() != text3)
     {
         std::cerr << __FUNCTION__ << std::endl;
@@ -89,7 +95,8 @@ bool t04()
     std::ostringstream os;
     os << json1;
     auto text3 = R"({"a":true,"b":"1"})";
-    if (!json1.completed() || json1.get_type() != jsonio::JsonType::J_OBJECT ||
+    if (!json1.completed() ||
+        json1.type() != jsonio::JsonType::J_OBJECT ||
         os.str() != text3)
     {
         std::cerr << __FUNCTION__ << std::endl;

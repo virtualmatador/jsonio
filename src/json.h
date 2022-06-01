@@ -92,12 +92,12 @@ public:
 
     bool completed() const;
 
-    JsonType get_type() const;
+    JsonType type() const;
     json & operator[](const std::string & key);
     const json & operator[](const std::string & key) const;
     json & operator[](size_t index);
     const json & operator[](size_t index) const;
-    const json* get_value(const std::string & key) const;
+    const json* at(const std::string & key) const;
 
     void* & get_null();
     void* const & get_null() const;

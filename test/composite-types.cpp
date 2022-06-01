@@ -12,7 +12,8 @@ bool t01()
     is >> json;
     std::ostringstream os;
     os << json;
-    if (!json.completed() || json.get_type() != jsonio::JsonType::J_ARRAY ||
+    if (!json.completed() ||
+        json.type() != jsonio::JsonType::J_ARRAY ||
         os.str() != text)
     {
         std::cerr << __FUNCTION__ << std::endl;
@@ -30,7 +31,8 @@ bool t02()
     std::ostringstream os;
     os << json;
     auto arr = os.str();
-    if (!json.completed() || json.get_type() != jsonio::JsonType::J_OBJECT ||
+    if (!json.completed() ||
+        json.type() != jsonio::JsonType::J_OBJECT ||
         os.str() != text)
     {
         std::cerr << __FUNCTION__ << std::endl;
@@ -48,7 +50,8 @@ bool t03()
     is >> json;
     std::ostringstream os;
     os << json;
-    if (!json.completed() || json.get_type() != jsonio::JsonType::J_OBJECT ||
+    if (!json.completed() ||
+        json.type() != jsonio::JsonType::J_OBJECT ||
         os.str() != text)
     {
         std::cerr << __FUNCTION__ << std::endl;

@@ -228,10 +228,10 @@ jsonio::json::~json() noexcept
 
 void jsonio::json::steal(const json & source, bool convert)
 {
-    switch (get_type())
+    switch (type())
     {
     case JsonType::J_NULL :
-        switch (source.get_type())
+        switch (source.type())
         {
         case JsonType::J_NULL:
             get_null() = source.get_null();
@@ -248,7 +248,7 @@ void jsonio::json::steal(const json & source, bool convert)
         }
         break;
     case JsonType::J_STRING :
-        switch (source.get_type())
+        switch (source.type())
         {
         case JsonType::J_NULL:
             if (convert)
@@ -293,7 +293,7 @@ void jsonio::json::steal(const json & source, bool convert)
         }
         break;
     case JsonType::J_LONG :
-        switch (source.get_type())
+        switch (source.type())
         {
         case JsonType::J_STRING:
             if (convert)
@@ -344,7 +344,7 @@ void jsonio::json::steal(const json & source, bool convert)
         }
         break;
     case JsonType::J_DOUBLE :
-        switch (source.get_type())
+        switch (source.type())
         {
         case JsonType::J_STRING:
             if (convert)
@@ -389,7 +389,7 @@ void jsonio::json::steal(const json & source, bool convert)
         }
         break;
     case JsonType::J_BOOL :
-        switch (source.get_type())
+        switch (source.type())
         {
         case JsonType::J_STRING:
             if (convert)
@@ -451,7 +451,7 @@ void jsonio::json::steal(const json & source, bool convert)
         }
         break;
     case JsonType::J_ARRAY :
-        switch (source.get_type())
+        switch (source.type())
         {
         case JsonType::J_NULL:
         case JsonType::J_STRING:
@@ -471,7 +471,7 @@ void jsonio::json::steal(const json & source, bool convert)
         }
         break;
     case JsonType::J_OBJECT :
-        switch (source.get_type())
+        switch (source.type())
         {
         case JsonType::J_OBJECT:
             get_object().steal(source.get_object(), convert);
@@ -666,7 +666,7 @@ void jsonio::json::write(std::ostream & os, int indents) const
 {
     if (completed())
     {
-        switch (get_type())
+        switch (type())
         {
         case JsonType::J_NULL:
             for (int i = 0; i < indents; ++i)
@@ -715,9 +715,9 @@ void jsonio::json::write(std::ostream & os, int indents) const
     }
 }
 
-jsonio::JsonType jsonio::json::get_type() const
+jsonio::JsonType jsonio::json::type() const
 {
-    return (JsonType)index();
+    return static_cast<JsonType>(index());
 }
 
 jsonio::json & jsonio::json::operator[](const std::string & key)
@@ -742,7 +742,7 @@ const jsonio::json & jsonio::json::operator[](size_t index) const
     return std::get<json_arr>(*this).operator[](index);
 }
 
-const jsonio::json* jsonio::json::get_value(const std::string & key) const
+const jsonio::json* jsonio::json::at(const std::string & key) const
 {
     auto it = std::get<json_obj>(*this).find(key);
     if (it != std::get<json_obj>(*this).end())

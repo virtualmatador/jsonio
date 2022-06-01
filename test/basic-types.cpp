@@ -12,7 +12,9 @@ bool t01()
     is >> json;
     std::ostringstream os;
     os << json;
-    if (!json.completed() || json.get_type() != jsonio::JsonType::J_LONG || os.str() != text)
+    if (!json.completed() ||
+        json.type() != jsonio::JsonType::J_LONG ||
+        os.str() != text)
     {
         std::cerr << __FUNCTION__ << std::endl;
         return false;
@@ -28,7 +30,9 @@ bool t02()
     is >> json;
     std::ostringstream os;
     os << json;
-    if (!json.completed() || json.get_type() != jsonio::JsonType::J_STRING || os.str() != text)
+    if (!json.completed() ||
+        json.type() != jsonio::JsonType::J_STRING ||
+        os.str() != text)
     {
         std::cerr << __FUNCTION__ << std::endl;
         return false;
@@ -44,7 +48,9 @@ bool t03()
     is >> json;
     std::ostringstream os;
     os << json;
-    if (!json.completed() || json.get_type() != jsonio::JsonType::J_BOOL || os.str() != text)
+    if (!json.completed() ||
+        json.type() != jsonio::JsonType::J_BOOL ||
+        os.str() != text)
     {
         std::cerr << __FUNCTION__ << std::endl;
         return false;
@@ -60,7 +66,9 @@ bool t04()
     is >> json;
     std::ostringstream os;
     os << json;
-    if (!json.completed() || json.get_type() != jsonio::JsonType::J_BOOL || os.str() != text)
+    if (!json.completed() ||
+        json.type() != jsonio::JsonType::J_BOOL ||
+        os.str() != text)
     {
         std::cerr << __FUNCTION__ << std::endl;
         return false;
@@ -76,7 +84,9 @@ bool t05()
     is >> json;
     std::ostringstream os;
     os << json;
-    if (!json.completed() || json.get_type() != jsonio::JsonType::J_DOUBLE || os.str() != text)
+    if (!json.completed() ||
+        json.type() != jsonio::JsonType::J_DOUBLE ||
+        os.str() != text)
     {
         std::cerr << __FUNCTION__ << std::endl;
         return false;
