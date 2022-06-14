@@ -7,11 +7,11 @@
 bool t01()
 {
     jsonio::json_obj obj;
-    obj.insert({ "a", 3L });
-    obj.insert({ "b", false });
+    obj["a"] = 3;
+    obj["b"] = false;
     jsonio::json_obj obj2;
-    obj2.insert({ "cc", "some text" });
-    obj.insert({ "c", obj2 });
+    obj2["cc"] = "some text";
+    obj["c"] = obj2;
     std::ostringstream os;
     os << std::noskipws << obj;
     if (os.str() != "{\n\t\"a\": 3,\n\t\"b\": false,\n\t\"c\":\n\t"

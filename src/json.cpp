@@ -46,6 +46,11 @@ jsonio::json::json(const long & long_value)
     *this = long_value;
 }
 
+jsonio::json::json(const int & int_value)
+{
+    *this = int_value;
+}
+
 jsonio::json::json(const double & double_value)
 {
     *this = double_value;
@@ -176,6 +181,20 @@ jsonio::json & jsonio::json::operator=(const char* string_value)
 jsonio::json & jsonio::json::operator=(const long & long_value)
 {
     PARENT_TYPE::operator=(long_value);
+    flags_ = PHASE_COMPLETED;
+    return *this;
+}
+
+jsonio::json & jsonio::json::operator=(const int & int_value)
+{
+    PARENT_TYPE::operator=(static_cast<long>(int_value));
+    flags_ = PHASE_COMPLETED;
+    return *this;
+}
+
+jsonio::json & jsonio::json::operator=(const std::size_t & size_t_value)
+{
+    PARENT_TYPE::operator=(static_cast<long>(size_t_value));
     flags_ = PHASE_COMPLETED;
     return *this;
 }
@@ -322,7 +341,7 @@ void jsonio::json::steal(const json & source, bool convert)
             {
                 if (source.get_double() == std::round(source.get_double()))
                 {
-                    get_long() = (long)source.get_double();
+                    get_long() = static_cast<long>(source.get_double());
                 }
             }
             break;

@@ -63,6 +63,7 @@ public:
     json(std::string && string_value);
     json(const char* string_value);
     json(const long & long_value);
+    json(const int & int_value);
     json(const double & double_value);
     json(const bool & bool_value);
     json(const json_obj & json_object_value);
@@ -78,6 +79,8 @@ public:
     json & operator=(std::string && string_value);
     json & operator=(const char* string_value);
     json & operator=(const long & long_value);
+    json & operator=(const int & int_value);
+    json & operator=(const std::size_t & size_t_value);
     json & operator=(const double & double_value);
     json & operator=(const bool & bool_value);
     json & operator=(const json_obj & json_object_value);
