@@ -50,7 +50,7 @@ private:
         EMPTY_VALUE = 0x0008;
 
 private:
-    size_t read(std::istream & is, const std::string & delimiters);
+    std::size_t read(std::istream & is, const std::string & delimiters);
     void write(std::ostream & os, int indents) const;
 
 public:
@@ -64,6 +64,7 @@ public:
     json(const char* string_value);
     json(const long & long_value);
     json(const int & int_value);
+    json(const std::size_t & size_t_value);
     json(const double & double_value);
     json(const bool & bool_value);
     json(const json_obj & json_object_value);
@@ -98,8 +99,8 @@ public:
     JsonType type() const;
     json & operator[](const std::string & key);
     const json & operator[](const std::string & key) const;
-    json & operator[](size_t index);
-    const json & operator[](size_t index) const;
+    json & operator[](std::size_t index);
+    const json & operator[](std::size_t index) const;
     const json* at(const std::string & key) const;
 
     void* & get_null();

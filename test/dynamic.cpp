@@ -10,8 +10,7 @@ bool t01()
     jsonio::json json;
     std::istringstream is{text};
     is >> json;
-    json["c"] = jsonio::json();
-    json["c"] = long(123);
+    json["c"] = 123;
     json["e"] = jsonio::json_obj();
     json["e"]["f"] = true;
     json["g"] = jsonio::json();

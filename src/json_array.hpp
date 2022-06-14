@@ -81,16 +81,6 @@ public:
         return (flags_ & MASK_PHASE) == PHASE_COMPLETED;
     }
 
-    json & operator[](size_t index)
-    {
-        return const_cast<json &>(static_cast<const json_array &>(*this).operator[](index));
-    }
-
-    const json & operator[](size_t index) const
-    {
-        return PARENT_TYPE::operator[](index);
-    }
-
     void read(std::istream & is)
     {
         if ((flags_ & MASK_PHASE) == PHASE_COMPLETED)

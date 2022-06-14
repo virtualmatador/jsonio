@@ -51,6 +51,11 @@ jsonio::json::json(const int & int_value)
     *this = int_value;
 }
 
+jsonio::json::json(const std::size_t & size_t_value)
+{
+    *this = size_t_value;
+}
+
 jsonio::json::json(const double & double_value)
 {
     *this = double_value;
@@ -511,9 +516,9 @@ bool jsonio::json::completed() const
     return (flags_ & MASK_PHASE) == PHASE_COMPLETED;
 }
 
-size_t jsonio::json::read(std::istream & is, const std::string & delimiters)
+std::size_t jsonio::json::read(std::istream & is, const std::string & delimiters)
 {
-    size_t delimiter = -1;
+    std::size_t delimiter = -1;
     if ((flags_ & MASK_PHASE) == PHASE_COMPLETED)
     {
         flags_ = PHASE_START;
@@ -741,8 +746,7 @@ jsonio::JsonType jsonio::json::type() const
 
 jsonio::json & jsonio::json::operator[](const std::string & key)
 {
-    return const_cast<json &>(
-        static_cast<const json &>(*this).operator[](key));
+    return std::get<json_obj>(*this).operator[](key);
 }
 
 const jsonio::json & jsonio::json::operator[](const std::string & key) const
@@ -750,13 +754,12 @@ const jsonio::json & jsonio::json::operator[](const std::string & key) const
     return std::get<json_obj>(*this).operator[](key);
 }
 
-jsonio::json & jsonio::json::operator[](size_t index)
+jsonio::json & jsonio::json::operator[](std::size_t index)
 {
-    return const_cast<json &>(
-        static_cast<const json &>(*this).operator[](index));
+    return std::get<json_arr>(*this).operator[](index);
 }
 
-const jsonio::json & jsonio::json::operator[](size_t index) const
+const jsonio::json & jsonio::json::operator[](std::size_t index) const
 {
     return std::get<json_arr>(*this).operator[](index);
 }

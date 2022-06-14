@@ -96,8 +96,7 @@ public:
 
     json & operator[](const std::string & key)
     {
-        return const_cast<json &>(
-            static_cast<const json_object &>(*this).operator[](key));
+        return PARENT_TYPE::operator[](key);
     }
 
     const json & operator[](const std::string & key) const
