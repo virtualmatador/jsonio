@@ -2,6 +2,7 @@
 #define JSONIO_SRC_JSON_OBJECT_HPP
 
 #include <algorithm>
+#include <stdexcept>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -101,7 +102,12 @@ public:
 
     const json & operator[](const std::string & key) const
     {
-        return PARENT_TYPE::find(key)->second;
+        auto pair = PARENT_TYPE::find(key);
+        if (pair == PARENT_TYPE::end())
+        {
+            throw std::invalid_argument("jsonio::json_obj::operator[] " + key);
+        }
+        return pair->second;
     }
 
     void steal(const json_object& source, bool convert)
