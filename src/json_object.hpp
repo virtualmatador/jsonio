@@ -37,6 +37,13 @@ public:
         SKIP_PREFIX = 0x0008;
 
 public:
+    json_object(PARENT_TYPE&& init) noexcept
+        : PARENT_TYPE{ std::move(init) }
+        , flags_{PHASE_COMPLETED}
+        , value_{std::make_unique<json>()}
+    {
+    }
+
     json_object() noexcept
         : flags_{PHASE_COMPLETED}
         , value_{std::make_unique<json>()}

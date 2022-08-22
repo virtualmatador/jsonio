@@ -25,6 +25,14 @@ public:
         SKIP_PREFIX = 0x0004;
 
 public:
+    json_array(PARENT_TYPE&& init) noexcept
+        : PARENT_TYPE{ std::move(init) }
+        , flags_{PHASE_COMPLETED}
+        , value_{std::make_unique<json>()}
+    {
+
+    }
+
     json_array() noexcept
         : flags_{PHASE_COMPLETED}
         , value_{std::make_unique<json>()}
