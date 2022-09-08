@@ -286,17 +286,13 @@ void jsonio::json::steal(const json & source, bool convert)
         case JsonType::J_LONG:
             if (convert)
             {
-                std::ostringstream os;
-                os << source.get_long();
-                get_string() = os.str();
+                get_string() = std::to_string(source.get_long());
             }
             break;
         case JsonType::J_DOUBLE:
             if (convert)
             {
-                std::ostringstream os;
-                os << source.get_double();
-                get_string() = os.str();
+                get_string() = std::to_string(source.get_double());
             }
             break;
         case JsonType::J_BOOL:
@@ -328,9 +324,7 @@ void jsonio::json::steal(const json & source, bool convert)
                 {
                     if (d == std::round(d))
                     {
-                        std::ostringstream os;
-                        os << d;
-                        if (source.get_string() == os.str())
+                        if (source.get_string() == std::to_string(d))
                         {
                             get_long() = d;
                         }
@@ -377,9 +371,7 @@ void jsonio::json::steal(const json & source, bool convert)
                 auto d = std::strtod(source.get_string().c_str(), &progress);
                 if (*progress == *source.get_string().end())
                 {
-                    std::ostringstream os;
-                    os << d;
-                    if (source.get_string() == os.str())
+                    if (source.get_string() == std::to_string(d))
                     {
                         get_double() = d;
                     }
