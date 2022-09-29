@@ -117,6 +117,21 @@ public:
         return pair->second;
     }
 
+    json* at(const std::string & key)
+    {
+        return const_cast<json*>(
+            static_cast<const json_object&>(*this).at(key));
+    }
+
+    const json* at(const std::string & key) const
+    {
+        if (auto it = PARENT_TYPE::find(key); it != PARENT_TYPE::end())
+        {
+            return &it->second;
+        }
+        return nullptr;
+    }
+
     void steal(const json_object& source, bool convert)
     {
         for (auto& [key, value] : *this)

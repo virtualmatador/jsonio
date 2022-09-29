@@ -101,6 +101,7 @@ public:
     const json & operator[](const std::string & key) const;
     json & operator[](std::size_t index);
     const json & operator[](std::size_t index) const;
+    json* at(const std::string & key);
     const json* at(const std::string & key) const;
 
     void* & get_null();

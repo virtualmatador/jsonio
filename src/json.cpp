@@ -756,14 +756,14 @@ const jsonio::json & jsonio::json::operator[](std::size_t index) const
     return std::get<json_arr>(*this).operator[](index);
 }
 
+jsonio::json* jsonio::json::at(const std::string & key)
+{
+    return std::get<json_obj>(*this).at(key);
+}
+
 const jsonio::json* jsonio::json::at(const std::string & key) const
 {
-    auto it = std::get<json_obj>(*this).find(key);
-    if (it != std::get<json_obj>(*this).end())
-    {
-        return &it->second;
-    }
-    return nullptr;
+    return std::get<json_obj>(*this).at(key);
 }
 
 void* & jsonio::json::get_null()
