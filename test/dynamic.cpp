@@ -30,6 +30,31 @@ bool t01()
         os.str() != expected)
     {
         std::cerr << __FUNCTION__ << std::endl;
+        std::cerr << os.str() << std::endl;
+        return false;
+    }
+    return true;
+}
+
+bool t02()
+{
+    jsonio::json_obj json{{
+        {"Name", "Bob"},
+        {"Age", 25},
+        {"Wife", jsonio::json_obj{{
+            {"Name", "Alice"},
+            {"Age", 25}
+        }}}
+    }};
+    std::ostringstream os;
+    os << json;
+    auto expected =
+        R"({"Name":"Bob","Age":25,"Wife":{"Name":"Alice","Age":25}})";
+    if (!json.completed() ||
+        os.str() != expected)
+    {
+        std::cerr << __FUNCTION__ << std::endl;
+        std::cerr << os.str() << std::endl;
         return false;
     }
     return true;
@@ -39,6 +64,7 @@ int main()
 {
     if (
         t01() &&
+        t02() &&
         true)
     {
         return 0;

@@ -64,4 +64,26 @@ public:
 
 }
 
+template<>
+class std::equal_to<jsonio::json_string>
+{
+public:
+    bool operator()(const jsonio::json_string& l, const jsonio::json_string& r) const
+    {
+        return *static_cast<const std::string*>(&l) ==
+            *static_cast<const std::string*>(&r);
+    }
+};
+
+template<>
+class std::hash<jsonio::json_string> : public std::hash<std::string>
+{
+public:
+    std::size_t operator()(const jsonio::json_string& key) const
+    {
+        return std::hash<std::string>::operator()(
+            *static_cast<const std::string*>(&key));
+    }
+};
+
 #endif //JSONIO_JSON_STREAM_H

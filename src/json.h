@@ -13,7 +13,7 @@
 namespace jsonio
 {
 
-template<class J>
+template<class json>
 using VARIANT_TYPE = std::variant
 <
     void*,
@@ -21,8 +21,8 @@ using VARIANT_TYPE = std::variant
     long,
     double,
     bool,
-    json_array<J>,
-    json_object<J>
+    json_array<json>,
+    json_object<json>
 >;
 
 class json;

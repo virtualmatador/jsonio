@@ -500,7 +500,7 @@ void jsonio::json::steal(const json & source, bool convert)
 void jsonio::json::clear()
 {
     flags_ = PHASE_START;
-    PARENT_TYPE::operator=(PARENT_TYPE());
+    PARENT_TYPE::operator=(PARENT_TYPE{});
 }
 
 bool jsonio::json::completed() const

@@ -98,7 +98,6 @@ void jsonio::json_string::check_escape()
 
 void jsonio::json_string::read(std::istream & is)
 {
-    is >> std::noskipws;
     if ((flags_ & MASK_PHASE) == PHASE_COMPLETED)
     {
         flags_ = PHASE_START;
@@ -112,7 +111,7 @@ void jsonio::json_string::read(std::istream & is)
     if ((flags_ & MASK_PHASE) == PHASE_TEXT)
     {
         char source;
-        while (is >> source)
+        while (is.get(source))
         {
             if (flags_ & ESCAPING)
             {
@@ -148,7 +147,6 @@ void jsonio::json_string::read(std::istream & is)
             }
         }
     }
-    is >> std::skipws;
 }
 
 void jsonio::json_string::write(std::ostream & os) const

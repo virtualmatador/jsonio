@@ -4,9 +4,9 @@
 #include <algorithm>
 #include <stdexcept>
 #include <iostream>
-#include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 #include "json_string.h"
 
@@ -14,7 +14,8 @@ namespace jsonio
 {
 
 template<class json>
-using JSON_OBJECT_PARENT = std::map<json_string, json>;
+using JSON_OBJECT_PARENT =
+    std::unordered_map<json_string, std::pair<std::size_t, json>>;
 
 template<class json>
 class json_object : public JSON_OBJECT_PARENT<json>
@@ -22,6 +23,7 @@ class json_object : public JSON_OBJECT_PARENT<json>
 private:
     using PARENT_TYPE = JSON_OBJECT_PARENT<json>;
     unsigned int flags_;
+    std::size_t next_index_;
     json_string key_;
     std::unique_ptr<json> value_;
 
@@ -37,21 +39,34 @@ public:
         SKIP_PREFIX = 0x0008;
 
 public:
-    json_object(PARENT_TYPE&& init) noexcept
-        : PARENT_TYPE{ std::move(init) }
-        , flags_{PHASE_COMPLETED}
+    json_object(std::vector<std::pair<json_string, json>>&& init) noexcept
+        : flags_{PHASE_COMPLETED}
+        , next_index_{0}
         , value_{std::make_unique<json>()}
     {
+        for (auto& [key, value] : init)
+        {
+            PARENT_TYPE::insert(
+            {
+                std::move(key),
+                {
+                    next_index_++,
+                    std::move(value)
+                }
+            });
+        }
     }
 
     json_object() noexcept
         : flags_{PHASE_COMPLETED}
+        , next_index_{0}
         , value_{std::make_unique<json>()}
     {
     }
 
     json_object(const unsigned int flags) noexcept
         : flags_{flags}
+        , next_index_{0}
         , value_{std::make_unique<json>()}
     {
     }
@@ -74,6 +89,7 @@ public:
         {
             PARENT_TYPE::operator=(*(PARENT_TYPE*)&source);
             flags_ = source.flags_;
+            next_index_ = source.next_index_;
             key_ = source.key_;
             *value_ = *source.value_;
         }
@@ -87,6 +103,8 @@ public:
             PARENT_TYPE::operator=(std::move(*(PARENT_TYPE*)&source));
             flags_ = source.flags_;
             source.flags_ = PHASE_START;
+            next_index_ = source.next_index_;
+            source.next_index_ = 0;
             key_ = std::move(source.key_);
             *value_ = std::move(*source.value_);
         }
@@ -104,7 +122,17 @@ public:
 
     json & operator[](const std::string & key)
     {
-        return PARENT_TYPE::operator[](key);
+        auto pair = PARENT_TYPE::find(key);
+        if (pair == PARENT_TYPE::end())
+        {
+            auto [node, inserted] = PARENT_TYPE::insert({key, {next_index_, {}}});
+            if (inserted)
+            {
+                next_index_ += 1;
+            }
+            pair = node;
+        }
+        return pair->second.second;
     }
 
     const json & operator[](const std::string & key) const
@@ -114,7 +142,7 @@ public:
         {
             throw std::invalid_argument("jsonio::json_obj::operator[] " + key);
         }
-        return pair->second;
+        return pair->second.second;
     }
 
     json* at(const std::string & key)
@@ -127,19 +155,19 @@ public:
     {
         if (auto it = PARENT_TYPE::find(key); it != PARENT_TYPE::end())
         {
-            return &it->second;
+            return &it->second.second;
         }
         return nullptr;
     }
 
     void steal(const json_object& source, bool convert)
     {
-        for (auto& [key, value] : *this)
+        for (auto& [key, index_value] : *this)
         {
             auto source_node = source.find(key);
             if (source_node != source.end())
             {
-                value.steal(source_node->second, convert);
+                index_value.second.steal(source_node->second.second, convert);
             }
         }
     }
@@ -147,9 +175,12 @@ public:
     void read(std::istream & is)
     {
         if ((flags_ & MASK_PHASE) == PHASE_COMPLETED)
+        {
             flags_ = PHASE_START;
+        }
         if ((flags_ & MASK_PHASE) == PHASE_START)
         {
+            next_index_ = 0;
             PARENT_TYPE::clear();
             if (flags_ & SKIP_PREFIX)
             {
@@ -268,9 +299,8 @@ public:
                 }
                 if (append)
                 {
-                    PARENT_TYPE::insert(std::make_pair(
-                        std::move(key_),
-                        std::move(*value_)));
+                    PARENT_TYPE::insert(std::make_pair(std::move(key_),
+                        std::make_pair(next_index_++, std::move(*value_))));
                 }
                 if (read_again)
                 {
@@ -293,7 +323,7 @@ public:
             }
             os << '{';
             bool comma = false;
-            for (const auto& [key, value] : *this)
+            auto key_value_writer = [&](const json_string& key, const json& value)
             {
                 if (comma)
                 {
@@ -328,6 +358,40 @@ public:
                         os << " ";
                     }
                     value.write(os, 0);
+                }
+            };
+            if (os.flags() & std::ios_base::internal)
+            {
+                for (const auto& [key, index_value] : *this)
+                {
+                    key_value_writer(key, index_value.second);
+                }
+            }
+            else
+            {
+                std::vector<typename PARENT_TYPE::const_iterator> nodes;
+                nodes.reserve(PARENT_TYPE::size());
+                for (auto it = PARENT_TYPE::begin(); it != PARENT_TYPE::end(); ++it)
+                {
+                    nodes.emplace_back(it);
+                }
+                if (os.flags() & std::ios_base::right)
+                {
+                    std::sort(nodes.begin(), nodes.end(), [](const auto& l, const auto& r)
+                    {
+                        return l->first < r->first;
+                    });
+                }
+                else
+                {
+                    std::sort(nodes.begin(), nodes.end(), [](const auto& l, const auto& r)
+                    {
+                        return l->second.first < r->second.first;
+                    });
+                }
+                for (const auto& it : nodes)
+                {
+                    key_value_writer(it->first, it->second.second);
                 }
             }
             if (!(os.flags() & std::ios_base::skipws))
