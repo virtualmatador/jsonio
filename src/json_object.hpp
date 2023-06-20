@@ -71,19 +71,19 @@ public:
     {
     }
 
-    json_object(const json_object & source) noexcept
+    json_object(const json_object& source) noexcept
         : value_{std::make_unique<json>()}
     {
         *this = source;
     }
 
-    json_object(json_object && source) noexcept
+    json_object(json_object&& source) noexcept
         : value_{std::make_unique<json>()}
     {
         *this = std::move(source);
     }
 
-    json_object & operator=(const json_object & source) noexcept
+    json_object& operator=(const json_object& source) noexcept
     {
         if (this != &source)
         {
@@ -96,7 +96,7 @@ public:
         return *this;
     }
 
-    json_object & operator=(json_object && source) noexcept
+    json_object& operator=(json_object&& source) noexcept
     {
         if (this != &source)
         {
@@ -120,7 +120,7 @@ public:
         return (flags_ & MASK_PHASE) == PHASE_COMPLETED;
     }
 
-    json & operator[](const std::string & key)
+    json& operator[](const std::string& key)
     {
         auto pair = PARENT_TYPE::find(key);
         if (pair == PARENT_TYPE::end())
@@ -135,7 +135,7 @@ public:
         return pair->second.second;
     }
 
-    const json & operator[](const std::string & key) const
+    const json& operator[](const std::string& key) const
     {
         auto pair = PARENT_TYPE::find(key);
         if (pair == PARENT_TYPE::end())
@@ -145,13 +145,13 @@ public:
         return pair->second.second;
     }
 
-    json* at(const std::string & key)
+    json* at(const std::string& key)
     {
         return const_cast<json*>(
             static_cast<const json_object&>(*this).at(key));
     }
 
-    const json* at(const std::string & key) const
+    const json* at(const std::string& key) const
     {
         if (auto it = PARENT_TYPE::find(key); it != PARENT_TYPE::end())
         {
@@ -172,7 +172,7 @@ public:
         }
     }
 
-    void read(std::istream & is)
+    void read(std::istream& is)
     {
         if ((flags_ & MASK_PHASE) == PHASE_COMPLETED)
         {
@@ -310,7 +310,7 @@ public:
         }
     }
 
-    void write(std::ostream & os, int indents) const
+    void write(std::ostream& os, int indents) const
     {
         if (completed())
         {
@@ -342,8 +342,8 @@ public:
                     }
                 }
                 os << '\"' << key << "\":";
-                if (value.index() == size_t(JsonType::J_ARRAY) ||
-                    value.index() == size_t(JsonType::J_OBJECT))
+                if (value->index() == size_t(JsonType::J_ARRAY) ||
+                    value->index() == size_t(JsonType::J_OBJECT))
                 {
                     if (!(os.flags() & std::ios_base::skipws))
                     {
@@ -407,16 +407,16 @@ public:
     }
 
 public:
-    template<class> friend std::istream & operator>>(
-        std::istream & is, json_object<json> & target);
-    template<class> friend std::ostream & operator<<(
-        std::ostream & os, const json_object<json> & source);
+    template<class> friend std::istream& operator>>(
+        std::istream& is, json_object<json>& target);
+    template<class> friend std::ostream& operator<<(
+        std::ostream& os, const json_object<json>& source);
 };
 
-template<class json> std::istream & operator>>(
-    std::istream & is, json_object<json> & target);
-template<class json> std::ostream & operator<<(
-    std::ostream & os, const json_object<json> & source);
+template<class json> std::istream& operator>>(
+    std::istream& is, json_object<json>& target);
+template<class json> std::ostream& operator<<(
+    std::ostream& os, const json_object<json>& source);
 
 } // namespace jsonio
 

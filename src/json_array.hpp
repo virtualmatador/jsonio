@@ -45,19 +45,19 @@ public:
     {
     }
 
-    json_array(const json_array & source) noexcept
+    json_array(const json_array& source) noexcept
         : value_{std::make_unique<json>()}
     {
         *this = source;
     }
 
-    json_array(json_array && source) noexcept
+    json_array(json_array&& source) noexcept
         : value_{std::make_unique<json>()}
     {
         *this = std::move(source);
     }
 
-    json_array & operator=(const json_array & source) noexcept
+    json_array& operator=(const json_array& source) noexcept
     {
         if (this != &source)
         {
@@ -68,7 +68,7 @@ public:
         return *this;
     }
 
-    json_array & operator=(json_array && source) noexcept
+    json_array& operator=(json_array&& source) noexcept
     {
         if (this != &source)
         {
@@ -89,7 +89,7 @@ public:
         return (flags_ & MASK_PHASE) == PHASE_COMPLETED;
     }
 
-    void read(std::istream & is)
+    void read(std::istream& is)
     {
         if ((flags_ & MASK_PHASE) == PHASE_COMPLETED)
             flags_ = PHASE_START;
@@ -154,7 +154,7 @@ public:
         }
     }
 
-    const void write(std::ostream & os, int indents) const
+    const void write(std::ostream& os, int indents) const
     {
         if (completed())
         {
@@ -167,7 +167,7 @@ public:
             }
             os << "[";
             bool comma = false;
-            for (const auto & sub_JsonValue : *this)
+            for (const auto& sub_JsonValue : *this)
             {
                 if (sub_JsonValue.completed())
                 {
@@ -203,12 +203,12 @@ public:
     }
 
 public:
-    template<class> friend std::istream & operator>>(std::istream & is, json_array<json> & target);
-    template<class> friend std::ostream & operator<<(std::ostream & os, const json_array<json> & source);
+    template<class> friend std::istream& operator>>(std::istream& is, json_array<json>& target);
+    template<class> friend std::ostream& operator<<(std::ostream& os, const json_array<json>& source);
 };
 
-template<class json> std::istream & operator>>(std::istream & is, json_array<json> & target);
-template<class json> std::ostream & operator<<(std::ostream & os, const json_array<json> & source);
+template<class json> std::istream& operator>>(std::istream& is, json_array<json>& target);
+template<class json> std::ostream& operator<<(std::ostream& os, const json_array<json>& source);
 
 } // namespace jsonio
 

@@ -78,6 +78,25 @@ bool t04()
 
 bool t05()
 {
+    auto text = "null";
+    jsonio::json json;
+    std::istringstream is{text};
+    is >> json;
+    std::ostringstream os;
+    os << json;
+    if (!json.completed() ||
+        !json.is_null() ||
+        json.type() != jsonio::JsonType::J_NULL ||
+        os.str() != text)
+    {
+        std::cerr << __FUNCTION__ << std::endl;
+        return false;
+    }
+    return true;
+}
+
+bool t06()
+{
     auto text = "3.1415926585";
     jsonio::json json;
     std::istringstream is{text};
@@ -102,6 +121,7 @@ int main()
         t03() &&
         t04() &&
         t05() &&
+        t06() &&
         true)
     {
         return 0;

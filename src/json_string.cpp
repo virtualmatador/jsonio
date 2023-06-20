@@ -5,12 +5,12 @@ jsonio::json_string::json_string() noexcept
 {
 }
 
-jsonio::json_string::json_string(const std::string & text) noexcept
+jsonio::json_string::json_string(const std::string& text) noexcept
 {
     *this = text;
 }
 
-jsonio::json_string::json_string(std::string && text) noexcept
+jsonio::json_string::json_string(std::string&& text) noexcept
 {
     *this = std::move(text);
 }
@@ -20,17 +20,17 @@ jsonio::json_string::json_string(const char* text) noexcept
     *this = text;
 }
 
-jsonio::json_string::json_string(const jsonio::json_string & source) noexcept
+jsonio::json_string::json_string(const jsonio::json_string& source) noexcept
 {
     *this = source;
 }
 
-jsonio::json_string::json_string(jsonio::json_string && source) noexcept
+jsonio::json_string::json_string(jsonio::json_string&& source) noexcept
 {
     *this = std::move(source);
 }
 
-jsonio::json_string & jsonio::json_string::operator=(const jsonio::json_string & source) noexcept
+jsonio::json_string& jsonio::json_string::operator=(const jsonio::json_string& source) noexcept
 {
     if (this != &source)
     {
@@ -40,7 +40,7 @@ jsonio::json_string & jsonio::json_string::operator=(const jsonio::json_string &
     return *this;
 }
 
-jsonio::json_string & jsonio::json_string::operator=(jsonio::json_string && source) noexcept
+jsonio::json_string& jsonio::json_string::operator=(jsonio::json_string&& source) noexcept
 {
     if (this != &source)
     {
@@ -51,7 +51,7 @@ jsonio::json_string & jsonio::json_string::operator=(jsonio::json_string && sour
     return *this;
 }
 
-jsonio::json_string & jsonio::json_string::operator=(const std::string & text) noexcept
+jsonio::json_string& jsonio::json_string::operator=(const std::string& text) noexcept
 {
     flags_ = PHASE_COMPLETED;
     std::string::operator=(text);
@@ -59,7 +59,7 @@ jsonio::json_string & jsonio::json_string::operator=(const std::string & text) n
     return *this;
 }
 
-jsonio::json_string & jsonio::json_string::operator=(std::string && text) noexcept
+jsonio::json_string& jsonio::json_string::operator=(std::string&& text) noexcept
 {
     flags_ = PHASE_COMPLETED;
     std::string::operator=(std::move(text));
@@ -67,7 +67,7 @@ jsonio::json_string & jsonio::json_string::operator=(std::string && text) noexce
     return *this;
 }
 
-jsonio::json_string & jsonio::json_string::operator=(const char* text) noexcept
+jsonio::json_string& jsonio::json_string::operator=(const char* text) noexcept
 {
     flags_ = PHASE_COMPLETED;
     std::string::operator=(text);
@@ -96,7 +96,7 @@ void jsonio::json_string::check_escape()
     }
 }
 
-void jsonio::json_string::read(std::istream & is)
+void jsonio::json_string::read(std::istream& is)
 {
     if ((flags_ & MASK_PHASE) == PHASE_COMPLETED)
     {
@@ -149,7 +149,7 @@ void jsonio::json_string::read(std::istream & is)
     }
 }
 
-void jsonio::json_string::write(std::ostream & os) const
+void jsonio::json_string::write(std::ostream& os) const
 {
     if (completed())
     {

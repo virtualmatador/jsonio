@@ -3,19 +3,20 @@
 
 #include <iostream>
 #include <string>
+#include <variant>
 
 namespace jsonio
 {
 
-enum class JsonType : size_t
+enum class JsonType : std::size_t
 {
-    J_NULL,
     J_STRING,
     J_LONG,
     J_DOUBLE,
     J_BOOL,
     J_ARRAY,
     J_OBJECT,
+    J_NULL,
 };
 
 class json_string : public std::string
@@ -34,24 +35,24 @@ private:
 
 public:
     json_string() noexcept;
-    json_string(const std::string & text) noexcept;
-    json_string(std::string && text) noexcept;
+    json_string(const std::string& text) noexcept;
+    json_string(std::string&& text) noexcept;
     json_string(const char* text) noexcept;
-    json_string(const json_string & source) noexcept;
-    json_string(json_string && source) noexcept;
-    json_string & operator=(const std::string & text) noexcept;
-    json_string & operator=(std::string && text) noexcept;
-    json_string & operator=(const char* text) noexcept;
-    json_string & operator=(const json_string & source) noexcept;
-    json_string & operator=(json_string && source) noexcept;
+    json_string(const json_string& source) noexcept;
+    json_string(json_string&& source) noexcept;
+    json_string& operator=(const std::string& text) noexcept;
+    json_string& operator=(std::string&& text) noexcept;
+    json_string& operator=(const char* text) noexcept;
+    json_string& operator=(const json_string& source) noexcept;
+    json_string& operator=(json_string&& source) noexcept;
     ~json_string() noexcept;
 
     bool completed() const;
 
 private:
     void check_escape();
-    void read(std::istream & is);
-    void write(std::ostream & os) const;
+    void read(std::istream& is);
+    void write(std::ostream& os) const;
 
 private:
     static char Unescape(const char source);
