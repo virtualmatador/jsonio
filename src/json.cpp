@@ -457,6 +457,12 @@ void jsonio::json::clear()
     PARENT_TYPE::operator=(PARENT_TYPE{});
 }
 
+bool jsonio::json::operator==(const json &that) const
+{
+    return *static_cast<const PARENT_TYPE*>(this) ==
+        *static_cast<const PARENT_TYPE*>(&that);
+}
+
 bool jsonio::json::completed() const
 {
     return (flags_ & MASK_PHASE) == PHASE_COMPLETED;

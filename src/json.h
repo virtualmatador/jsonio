@@ -96,6 +96,7 @@ public:
     void steal(const json& source, bool convert);
     void clear();
 
+    bool operator==(const json& that) const;
     bool completed() const;
 
     JsonType type() const;

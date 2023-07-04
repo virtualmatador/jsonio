@@ -413,10 +413,19 @@ public:
         std::ostream& os, const json_object<json>& source);
 };
 
-template<class json> std::istream& operator>>(
-    std::istream& is, json_object<json>& target);
-template<class json> std::ostream& operator<<(
-    std::ostream& os, const json_object<json>& source);
+template<class json>
+std::istream& operator>>(std::istream& is, json_object<json>& target)
+{
+    target.read(is);
+    return is;
+}
+
+template<class json>
+std::ostream& operator<<(std::ostream& os, const json_object<json>& source)
+{
+    source.write(os, 0);
+    return os;
+}
 
 } // namespace jsonio
 
