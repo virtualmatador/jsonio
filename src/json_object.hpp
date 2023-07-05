@@ -13,9 +13,41 @@
 namespace jsonio
 {
 
+template<class json> class json_object;
+
 template<class json>
-using JSON_OBJECT_PARENT =
-    std::unordered_map<json_string, std::pair<std::size_t, json>>;
+class indexed_json : public json
+{
+public:
+    indexed_json(const json& source, std::size_t index) noexcept
+        : json{ source }
+        , index_{ index }
+    {
+    }
+
+    indexed_json(const json&& source, std::size_t index) noexcept
+        : json{ std::move(source) }
+        , index_{ index }
+    {
+    }
+
+    bool operator==(const indexed_json& that) const
+    {
+        return json::operator==(that);
+    }
+
+    bool operator==(const json& that) const
+    {
+        return json::operator==(that);
+    }
+
+private:
+    std::size_t index_;
+    friend class json_object<json>;
+};
+
+template<class json>
+using JSON_OBJECT_PARENT = std::unordered_map<json_string, indexed_json<json>>;
 
 template<class json>
 class json_object : public JSON_OBJECT_PARENT<json>
@@ -50,8 +82,8 @@ public:
             {
                 std::move(key),
                 {
-                    next_index_++,
-                    std::move(value)
+                    std::move(value),
+                    next_index_++
                 }
             });
         }
@@ -125,14 +157,14 @@ public:
         auto pair = PARENT_TYPE::find(key);
         if (pair == PARENT_TYPE::end())
         {
-            auto [node, inserted] = PARENT_TYPE::insert({key, {next_index_, {}}});
+            auto [node, inserted] = PARENT_TYPE::insert({key, {{}, next_index_}});
             if (inserted)
             {
                 next_index_ += 1;
             }
             pair = node;
         }
-        return pair->second.second;
+        return pair->second;
     }
 
     const json& operator[](const std::string& key) const
@@ -142,7 +174,7 @@ public:
         {
             throw std::invalid_argument("jsonio::json_obj::operator[] " + key);
         }
-        return pair->second.second;
+        return pair->second;
     }
 
     json* at(const std::string& key)
@@ -155,7 +187,7 @@ public:
     {
         if (auto it = PARENT_TYPE::find(key); it != PARENT_TYPE::end())
         {
-            return &it->second.second;
+            return &it->second;
         }
         return nullptr;
     }
@@ -167,7 +199,7 @@ public:
             auto source_node = source.find(key);
             if (source_node != source.end())
             {
-                index_value.second.steal(source_node->second.second, convert);
+                index_value.steal(source_node->second, convert);
             }
         }
     }
@@ -299,8 +331,10 @@ public:
                 }
                 if (append)
                 {
-                    PARENT_TYPE::insert(std::make_pair(std::move(key_),
-                        std::make_pair(next_index_++, std::move(*value_))));
+                    PARENT_TYPE::insert(
+                    {
+                        std::move(key_), { std::move(*value_), next_index_++ }
+                    });
                 }
                 if (read_again)
                 {
@@ -364,7 +398,7 @@ public:
             {
                 for (const auto& [key, index_value] : *this)
                 {
-                    key_value_writer(key, index_value.second);
+                    key_value_writer(key, index_value);
                 }
             }
             else
@@ -386,12 +420,12 @@ public:
                 {
                     std::sort(nodes.begin(), nodes.end(), [](const auto& l, const auto& r)
                     {
-                        return l->second.first < r->second.first;
+                        return l->second.index_ < r->second.index_;
                     });
                 }
                 for (const auto& it : nodes)
                 {
-                    key_value_writer(it->first, it->second.second);
+                    key_value_writer(it->first, it->second);
                 }
             }
             if (!(os.flags() & std::ios_base::skipws))
