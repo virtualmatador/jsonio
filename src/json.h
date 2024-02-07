@@ -105,6 +105,8 @@ public:
   const json_obj &get_object() const;
   json_arr &get_array();
   const json_arr &get_array() const;
+  int get_int() const;
+  int get_uint() const;
   float get_float() const;
 
 public:

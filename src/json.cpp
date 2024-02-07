@@ -613,6 +613,14 @@ const jsonio::json_arr &jsonio::json::get_array() const {
   return std::get<json_arr>(**this);
 }
 
+int jsonio::json::get_int() const {
+  return static_cast<int>(std::get<long>(**this));
+}
+
+int jsonio::json::get_uint() const {
+  return static_cast<unsigned int>(std::get<long>(**this));
+}
+
 float jsonio::json::get_float() const {
   return static_cast<float>(std::get<double>(**this));
 }
