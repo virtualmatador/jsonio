@@ -6,11 +6,10 @@
 
 bool t01() {
   auto text = R"({"2":2,"1":1,"3":3})";
-  jsonio::json_obj obj;
+  jsonio::json obj;
   std::istringstream{text} >> obj;
-  std::ostringstream os;
-  os << std::skipws << obj;
-  if (os.str() != text) {
+  auto r = (std::ostringstream{} << obj.format().sort()).str();
+  if (r != R"({"1":1,"2":2,"3":3})") {
     std::cerr << __FUNCTION__ << std::endl;
     return false;
   }
@@ -19,11 +18,10 @@ bool t01() {
 
 bool t02() {
   auto text = R"({"2": 2, "1": 1, "3": 3})";
-  jsonio::json_obj obj;
+  jsonio::json obj;
   std::istringstream{text} >> obj;
-  std::ostringstream os;
-  os << std::skipws << std::right << obj;
-  if (os.str() != R"({"1":1,"2":2,"3":3})") {
+  auto r = (std::ostringstream{} << obj.format().sort(false)).str();
+  if (r != R"({"3":3,"2":2,"1":1})") {
     std::cerr << __FUNCTION__ << std::endl;
     return false;
   }

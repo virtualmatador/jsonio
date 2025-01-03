@@ -14,57 +14,41 @@ namespace jsonio {
 
 template <class json> class json_object;
 
-template <class json> class indexed_json : public json {
-public:
-  indexed_json(const json &source, std::size_t index) noexcept
-      : json{source}, index_{index} {}
-
-  indexed_json(const json &&source, std::size_t index) noexcept
-      : json{std::move(source)}, index_{index} {}
-
-  bool operator==(const indexed_json &that) const {
-    return json::operator==(that);
-  }
-
-  bool operator==(const json &that) const { return json::operator==(that); }
-
-private:
-  std::size_t index_;
-  friend class json_object<json>;
-};
-
 template <class json>
-using JSON_OBJECT_PARENT = std::unordered_map<json_string, indexed_json<json>>;
+using JSON_OBJECT_PARENT = std::unordered_map<json_string, json>;
 
 template <class json> class json_object : public JSON_OBJECT_PARENT<json> {
 private:
   using PARENT_TYPE = JSON_OBJECT_PARENT<json>;
   unsigned int flags_;
-  std::size_t next_index_;
   json_string key_;
   std::unique_ptr<json> value_;
 
 public:
-  static constexpr unsigned int PHASE_START = 0x0000, PHASE_KEY_START = 0x0001,
-                                PHASE_KEY_TEXT = 0x0002, PHASE_COLON = 0x0003,
-                                PHASE_VALUE = 0x0004, PHASE_COMPLETED = 0x0005,
-                                MASK_PHASE = 0x0007, SKIP_PREFIX = 0x0008;
+  enum : unsigned int {
+    PHASE_START = 0x0000,
+    PHASE_KEY_START = 0x0001,
+    PHASE_KEY_TEXT = 0x0002,
+    PHASE_COLON = 0x0003,
+    PHASE_VALUE = 0x0004,
+    PHASE_COMPLETED = 0x0005,
+    MASK_PHASE = 0x0007,
+    SKIP_PREFIX = 0x0008,
+  };
 
 public:
   json_object(std::vector<std::pair<json_string, json>> &&init) noexcept
-      : flags_{PHASE_COMPLETED}, next_index_{0},
-        value_{std::make_unique<json>()} {
+      : flags_{PHASE_COMPLETED}, value_{std::make_unique<json>()} {
     for (auto &[key, value] : init) {
-      PARENT_TYPE::insert({std::move(key), {std::move(value), next_index_++}});
+      PARENT_TYPE::insert({std::move(key), std::move(value)});
     }
   }
 
   json_object() noexcept
-      : flags_{PHASE_COMPLETED}, next_index_{0},
-        value_{std::make_unique<json>()} {}
+      : flags_{PHASE_COMPLETED}, value_{std::make_unique<json>()} {}
 
   json_object(const unsigned int flags) noexcept
-      : flags_{flags}, next_index_{0}, value_{std::make_unique<json>()} {}
+      : flags_{flags}, value_{std::make_unique<json>()} {}
 
   json_object(const json_object &source) noexcept
       : value_{std::make_unique<json>()} {
@@ -80,7 +64,6 @@ public:
     if (this != &source) {
       PARENT_TYPE::operator=(*(PARENT_TYPE *)&source);
       flags_ = source.flags_;
-      next_index_ = source.next_index_;
       key_ = source.key_;
       *value_ = *source.value_;
     }
@@ -92,8 +75,6 @@ public:
       PARENT_TYPE::operator=(std::move(*(PARENT_TYPE *)&source));
       flags_ = source.flags_;
       source.flags_ = PHASE_START;
-      next_index_ = source.next_index_;
-      source.next_index_ = 0;
       key_ = std::move(source.key_);
       *value_ = std::move(*source.value_);
     }
@@ -107,10 +88,7 @@ public:
   json &operator[](const std::string &key) {
     auto pair = PARENT_TYPE::find(key);
     if (pair == PARENT_TYPE::end()) {
-      auto [node, inserted] = PARENT_TYPE::insert({key, {{}, next_index_}});
-      if (inserted) {
-        next_index_ += 1;
-      }
+      auto [node, inserted] = PARENT_TYPE::insert({key, {}});
       pair = node;
     }
     return pair->second;
@@ -149,7 +127,6 @@ public:
       flags_ = PHASE_START;
     }
     if ((flags_ & MASK_PHASE) == PHASE_START) {
-      next_index_ = 0;
       PARENT_TYPE::clear();
       if (flags_ & SKIP_PREFIX) {
         flags_ &= ~MASK_PHASE;
@@ -234,8 +211,7 @@ public:
           is.setstate(std::ios::iostate::_S_badbit);
         }
         if (append) {
-          PARENT_TYPE::insert(
-              {std::move(key_), {std::move(*value_), next_index_++}});
+          PARENT_TYPE::insert({std::move(key_), std::move(*value_)});
         }
         if (read_again) {
           read(is);
@@ -244,73 +220,67 @@ public:
     }
   }
 
-  void write(std::ostream &os, int indents) const {
+  void write(std::ostream &os, int indents, unsigned int flags) const {
     if (completed()) {
-      if (!(os.flags() & std::ios_base::skipws)) {
+      if (flags & json::Format_Options::prettify) {
         for (int i = 0; i < indents; ++i) {
           os << '\t';
         }
       }
       os << '{';
-      bool comma = false;
-      auto key_value_writer = [&](const json_string &key, const json &value) {
-        if (comma) {
-          os << ',';
-        } else {
-          comma = true;
-        }
-        if (!(os.flags() & std::ios_base::skipws)) {
-          os << std::endl;
-          for (int i = 0; i < indents + 1; ++i) {
-            os << '\t';
-          }
-        }
-        os << '\"' << key << "\":";
-        if (value->index() == size_t(JsonType::J_ARRAY) ||
-            value->index() == size_t(JsonType::J_OBJECT)) {
-          if (!(os.flags() & std::ios_base::skipws)) {
-            os << std::endl;
-          }
-          value.write(os, indents + 1);
-        } else {
-          if (!(os.flags() & std::ios_base::skipws)) {
-            os << " ";
-          }
-          value.write(os, 0);
-        }
-      };
-      if (os.flags() & std::ios_base::internal) {
-        for (const auto &[key, index_value] : *this) {
-          key_value_writer(key, index_value);
-        }
+      if (flags & json::Format_Options::sort_asc) {
+        write_sorted<std::less<json_string>>(os, indents, flags);
+      } else if (flags & json::Format_Options::sort_desc) {
+        write_sorted<std::greater<json_string>>(os, indents, flags);
       } else {
-        std::vector<typename PARENT_TYPE::const_iterator> nodes;
-        nodes.reserve(PARENT_TYPE::size());
-        for (auto it = PARENT_TYPE::begin(); it != PARENT_TYPE::end(); ++it) {
-          nodes.emplace_back(it);
-        }
-        if (os.flags() & std::ios_base::right) {
-          std::sort(
-              nodes.begin(), nodes.end(),
-              [](const auto &l, const auto &r) { return l->first < r->first; });
-        } else {
-          std::sort(nodes.begin(), nodes.end(),
-                    [](const auto &l, const auto &r) {
-                      return l->second.index_ < r->second.index_;
-                    });
-        }
-        for (const auto &it : nodes) {
-          key_value_writer(it->first, it->second);
-        }
+        write_unsorted(os, indents, flags);
       }
-      if (!(os.flags() & std::ios_base::skipws)) {
-        os << std::endl;
+      if (flags & json::Format_Options::prettify) {
+        os << '\n';
         for (int i = 0; i < indents; ++i) {
           os << '\t';
         }
       }
       os << '}';
     }
+  }
+
+private:
+  void write_unsorted(std::ostream &os, int indents, unsigned int flags) const {
+    bool comma = false;
+    for (const auto &pair : *this) {
+      write_pair(os, indents, flags, comma, pair);
+    }
+  }
+
+  template <class comparator>
+  void write_sorted(std::ostream &os, int indents, unsigned int flags) const {
+    std::vector<std::reference_wrapper<const typename PARENT_TYPE::value_type>>
+        pairs(PARENT_TYPE::cbegin(), PARENT_TYPE::cend());
+    std::sort(pairs.begin(), pairs.end(), [](const auto &l, const auto &r) {
+      return comparator()(l.get().first, r.get().first);
+    });
+    bool comma = false;
+    for (const auto &pair : pairs) {
+      write_pair(os, indents, flags, comma, pair.get());
+    }
+  }
+
+  void write_pair(std::ostream &os, int indents, unsigned int flags,
+                  bool &comma, const PARENT_TYPE::value_type &pair) const {
+    if (comma) {
+      os << ',';
+    } else {
+      comma = true;
+    }
+    if (flags & json::Format_Options::prettify) {
+      os << '\n';
+      for (int i = 0; i < indents + 1; ++i) {
+        os << '\t';
+      }
+    }
+    os << '\"' << pair.first << "\":";
+    pair.second.write(os, true, indents + 1, flags);
   }
 
 public:
@@ -329,7 +299,7 @@ std::istream &operator>>(std::istream &is, json_object<json> &target) {
 
 template <class json>
 std::ostream &operator<<(std::ostream &os, const json_object<json> &source) {
-  source.write(os, 0);
+  source.write(os, 0, 0);
   return os;
 }
 

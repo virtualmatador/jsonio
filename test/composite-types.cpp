@@ -9,10 +9,9 @@ bool t01() {
   jsonio::json json;
   std::istringstream is{text};
   is >> json;
-  std::ostringstream os;
-  os << json;
+  auto r = (std::ostringstream{} << json).str();
   if (!json.completed() || json.type() != jsonio::JsonType::J_ARRAY ||
-      os.str() != text) {
+      r != text) {
     std::cerr << __FUNCTION__ << std::endl;
     return false;
   }
@@ -20,15 +19,13 @@ bool t01() {
 }
 
 bool t02() {
-  auto text = "{\"key1\":\"value s\",\"key2\":1363}";
+  auto text = "{\"key\":\"value = ' - $ # ! @ ^ % & * ( ) [ ] { } '\"}";
   jsonio::json json;
   std::istringstream is{text};
   is >> json;
-  std::ostringstream os;
-  os << json;
-  auto arr = os.str();
+  auto r = (std::ostringstream{} << json).str();
   if (!json.completed() || json.type() != jsonio::JsonType::J_OBJECT ||
-      os.str() != text) {
+      r != text) {
     std::cerr << __FUNCTION__ << std::endl;
     return false;
   }
@@ -41,10 +38,37 @@ bool t03() {
   jsonio::json json;
   std::istringstream is{text};
   is >> json;
-  std::ostringstream os;
-  os << json;
+  auto r = (std::ostringstream{} << json.format().sort()).str();
   if (!json.completed() || json.type() != jsonio::JsonType::J_OBJECT ||
-      os.str() != text) {
+      r != text) {
+    std::cerr << __FUNCTION__ << std::endl;
+    return false;
+  }
+  return true;
+}
+
+bool t04() {
+  auto text = "{\"key1\":[]}";
+  jsonio::json json;
+  std::istringstream is{text};
+  is >> json;
+  auto r = (std::ostringstream{} << json).str();
+  if (!json.completed() || json.type() != jsonio::JsonType::J_OBJECT ||
+      r != text) {
+    std::cerr << __FUNCTION__ << std::endl;
+    return false;
+  }
+  return true;
+}
+
+bool t05() {
+  auto text = "[]";
+  jsonio::json json;
+  std::istringstream is{text};
+  is >> json;
+  auto r = (std::ostringstream{} << json).str();
+  if (!json.completed() || json.type() != jsonio::JsonType::J_ARRAY ||
+      r != text) {
     std::cerr << __FUNCTION__ << std::endl;
     return false;
   }
@@ -52,7 +76,7 @@ bool t03() {
 }
 
 int main() {
-  if (t01() && t02() && t03() && true) {
+  if (t01() && t02() && t03() && t04() && t05() && true) {
     return 0;
   }
   return -1;

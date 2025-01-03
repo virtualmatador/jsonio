@@ -9,11 +9,9 @@ bool t01() {
   jsonio::json json;
   std::istringstream is{text};
   is >> json;
-  std::ostringstream os;
-  os << json;
-  auto arr = os.str();
+  auto r = (std::ostringstream{} << json).str();
   if (!json.completed() || json.type() != jsonio::JsonType::J_OBJECT ||
-      os.str() != text) {
+      r != text) {
     std::cerr << __FUNCTION__ << std::endl;
     return false;
   }
@@ -26,10 +24,9 @@ bool t02() {
   std::istringstream is{text};
   is >> json;
   json["k"] = "a\nb";
-  std::ostringstream os;
-  os << json;
+  auto r = (std::ostringstream{} << json.format().sort()).str();
   if (!json.completed() || json.type() != jsonio::JsonType::J_OBJECT ||
-      os.str() != text) {
+      r != text) {
     std::cerr << __FUNCTION__ << std::endl;
     return false;
   }

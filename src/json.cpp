@@ -488,47 +488,76 @@ std::size_t jsonio::json::read(std::istream &is,
   return delimiter;
 }
 
-void jsonio::json::write(std::ostream &os, int indents) const {
+void jsonio::json::write(std::ostream &os, bool separate, int indents,
+                         unsigned int flags) const {
   if (completed()) {
     switch (type()) {
     case JsonType::J_NULL:
-      for (int i = 0; i < indents; ++i) {
-        os << '\t';
+      if (flags & Format_Options::prettify) {
+        if (separate) {
+          os << " ";
+        }
       }
       os << "null";
       break;
     case JsonType::J_STRING:
-      for (int i = 0; i < indents; ++i) {
-        os << '\t';
+      if (flags & Format_Options::prettify) {
+        if (separate) {
+          os << " ";
+        }
       }
       os << '\"';
       std::get<json_string>(**this).write(os);
       os << '\"';
       break;
     case JsonType::J_LONG:
-      for (int i = 0; i < indents; ++i) {
-        os << '\t';
+      if (flags & Format_Options::prettify) {
+        if (separate) {
+          os << " ";
+        }
       }
       os << get_long();
       break;
     case JsonType::J_DOUBLE:
-      for (int i = 0; i < indents; ++i) {
-        os << '\t';
+      if (flags & Format_Options::prettify) {
+        if (separate) {
+          os << " ";
+        }
       }
       os << std::setprecision(std::numeric_limits<double>::max_digits10)
          << get_double();
       break;
     case JsonType::J_BOOL:
-      for (int i = 0; i < indents; ++i) {
-        os << '\t';
+      if (flags & Format_Options::prettify) {
+        if (separate) {
+          os << " ";
+        }
       }
       os << (get_bool() ? "true" : "false");
       break;
     case JsonType::J_ARRAY:
-      std::get<json_arr>(**this).write(os, indents);
+      if (flags & Format_Options::prettify) {
+        if (separate) {
+          if (flags & Format_Options::new_line_bracket) {
+            os << "\n";
+          } else {
+            os << " ";
+          }
+        }
+      }
+      std::get<json_arr>(**this).write(os, indents, flags);
       break;
     case JsonType::J_OBJECT:
-      std::get<json_obj>(**this).write(os, indents);
+      if (flags & Format_Options::prettify) {
+        if (separate) {
+          if (flags & Format_Options::new_line_bracket) {
+            os << "\n";
+          } else {
+            os << " ";
+          }
+        }
+      }
+      std::get<json_obj>(**this).write(os, indents, flags);
       break;
     }
   }
@@ -625,38 +654,22 @@ float jsonio::json::get_float() const {
   return static_cast<float>(std::get<double>(**this));
 }
 
+jsonio::json::formatter jsonio::json::format() const {
+  return formatter(*this);
+}
+
 std::istream &jsonio::operator>>(std::istream &is, jsonio::json &target) {
   target.read(is, "\n");
   return is;
 }
 
 std::ostream &jsonio::operator<<(std::ostream &os, const jsonio::json &source) {
-  source.write(os, 0);
+  source.write(os, false, 0);
   return os;
 }
 
-template <>
-std::istream &jsonio::operator>>(std::istream &is, jsonio::json_arr &target) {
-  target.read(is);
-  return is;
-}
-
-template <>
 std::ostream &jsonio::operator<<(std::ostream &os,
-                                 const jsonio::json_arr &source) {
-  source.write(os, 0);
-  return os;
-}
-
-template <>
-std::istream &jsonio::operator>>(std::istream &is, jsonio::json_obj &target) {
-  target.read(is);
-  return is;
-}
-
-template <>
-std::ostream &jsonio::operator<<(std::ostream &os,
-                                 const jsonio::json_obj &source) {
-  source.write(os, 0);
+                                 const jsonio::json::formatter &source) {
+  source.write(os);
   return os;
 }

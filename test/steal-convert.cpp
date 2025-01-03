@@ -12,10 +12,9 @@ bool t01() {
   auto text2 = "5678";
   std::istringstream{text2} >> json2;
   json1.steal(json2, false);
-  std::ostringstream os1;
-  os1 << json1;
+  auto r1 = (std::ostringstream{} << json1).str();
   if (!json1.completed() || json1.type() != jsonio::JsonType::J_LONG ||
-      os1.str() != text2) {
+      r1 != text2) {
     std::cerr << __FUNCTION__ << std::endl;
     return false;
   }
@@ -23,10 +22,9 @@ bool t01() {
   jsonio::json json3;
   std::istringstream{text3} >> json3;
   json1.steal(json3, false);
-  std::ostringstream os2;
-  os2 << json1;
+  auto r2 = (std::ostringstream{} << json1).str();
   if (!json1.completed() || json1.type() != jsonio::JsonType::J_LONG ||
-      os2.str() != text2) {
+      r2 != text2) {
     std::cerr << __FUNCTION__ << std::endl;
     return false;
   }
@@ -41,12 +39,10 @@ bool t02() {
   auto text2 = R"({"a": 0, "bb": false})";
   std::istringstream{text2} >> json2;
   json1.steal(json2, true);
-  std::ostringstream os;
-  os << json1;
-  auto arr = os.str();
+  auto r = (std::ostringstream{} << json1.format().sort()).str();
   auto text3 = R"({"a":false,"b":true})";
   if (!json1.completed() || json1.type() != jsonio::JsonType::J_OBJECT ||
-      os.str() != text3) {
+      r != text3) {
     std::cerr << __FUNCTION__ << std::endl;
     return false;
   }
@@ -61,11 +57,10 @@ bool t03() {
   auto text2 = R"({"aa": false, "b": "1"})";
   std::istringstream{text2} >> json2;
   json1.steal(json2, true);
-  std::ostringstream os;
-  os << json1;
+  auto r = (std::ostringstream{} << json1.format().sort()).str();
   auto text3 = R"({"a":true,"b":["1"]})";
   if (!json1.completed() || json1.type() != jsonio::JsonType::J_OBJECT ||
-      os.str() != text3) {
+      r != text3) {
     std::cerr << __FUNCTION__ << std::endl;
     return false;
   }
@@ -80,11 +75,10 @@ bool t04() {
   auto text2 = R"({"aa": false, "b":[["1"]]})";
   std::istringstream{text2} >> json2;
   json1.steal(json2, true);
-  std::ostringstream os;
-  os << json1;
+  auto r = (std::ostringstream{} << json1.format().sort()).str();
   auto text3 = R"({"a":true,"b":"1"})";
   if (!json1.completed() || json1.type() != jsonio::JsonType::J_OBJECT ||
-      os.str() != text3) {
+      r != text3) {
     std::cerr << __FUNCTION__ << std::endl;
     return false;
   }

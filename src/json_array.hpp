@@ -14,9 +14,13 @@ private:
   std::unique_ptr<json> value_;
 
 public:
-  static constexpr unsigned int PHASE_START = 0x0000, PHASE_VALUE = 0x0001,
-                                PHASE_COMPLETED = 0x0002, MASK_PHASE = 0x0003,
-                                SKIP_PREFIX = 0x0004;
+  enum : unsigned int {
+    PHASE_START = 0x0000,
+    PHASE_VALUE = 0x0001,
+    PHASE_COMPLETED = 0x0002,
+    MASK_PHASE = 0x0003,
+    SKIP_PREFIX = 0x0004,
+  };
 
 public:
   json_array(PARENT_TYPE &&init) noexcept
@@ -107,9 +111,9 @@ public:
     }
   }
 
-  const void write(std::ostream &os, int indents) const {
+  const void write(std::ostream &os, int indents, unsigned int flags) const {
     if (completed()) {
-      if (!(os.flags() & std::ios_base::skipws)) {
+      if (flags & json::Format_Options::prettify) {
         for (int i = 0; i < indents; ++i) {
           os << '\t';
         }
@@ -123,16 +127,17 @@ public:
           } else {
             comma = true;
           }
-          if (!(os.flags() & std::ios_base::skipws)) {
-            os << std::endl;
-            sub_JsonValue.write(os, indents + 1);
-          } else {
-            sub_JsonValue.write(os, 0);
+          if (flags & json::Format_Options::prettify) {
+            os << '\n';
+            for (int i = 0; i < indents + 1; ++i) {
+              os << '\t';
+            }
           }
+          sub_JsonValue.write(os, false, indents + 1);
         }
       }
-      if (!(os.flags() & std::ios_base::skipws)) {
-        os << std::endl;
+      if (flags & json::Format_Options::prettify) {
+        os << '\n';
         for (int i = 0; i < indents; ++i) {
           os << '\t';
         }
@@ -157,7 +162,7 @@ std::istream &operator>>(std::istream &is, json_array<json> &target) {
 
 template <class json>
 std::ostream &operator<<(std::ostream &os, const json_array<json> &source) {
-  source.write(os, 0);
+  source.write(os, 0, 0);
   return os;
 }
 

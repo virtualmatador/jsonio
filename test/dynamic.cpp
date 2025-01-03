@@ -20,30 +20,26 @@ bool t01() {
   json["i"]["j"] = 0.5;
   json["k"] = jsonio::json_arr();
   json["k"].get_array().push_back(jsonio::json_obj());
-  std::ostringstream os;
-  os << json;
+  auto r = (std::ostringstream{} << json.format().sort()).str();
   auto expected =
       R"({"a":"b","c":123,"e":{"f":true},"g":["h"],"i":{"j":0.5},"k":[{}]})";
   if (!json.completed() || json.type() != jsonio::JsonType::J_OBJECT ||
-      os.str() != expected) {
+      r != expected) {
     std::cerr << __FUNCTION__ << std::endl;
-    std::cerr << os.str() << std::endl;
     return false;
   }
   return true;
 }
 
 bool t02() {
-  jsonio::json_obj json{
+  jsonio::json json{jsonio::json_obj{
       {{"Name", "Bob"},
        {"Age", 25},
-       {"Wife", jsonio::json_obj{{{"Name", "Alice"}, {"Age", 25}}}}}};
-  std::ostringstream os;
-  os << json;
-  auto expected = R"({"Name":"Bob","Age":25,"Wife":{"Name":"Alice","Age":25}})";
-  if (!json.completed() || os.str() != expected) {
+       {"Wife", jsonio::json_obj{{{"Name", "Alice"}, {"Age", 25}}}}}}};
+  auto r = (std::ostringstream{} << json.format().sort()).str();
+  auto expected = R"({"Age":25,"Name":"Bob","Wife":{"Age":25,"Name":"Alice"}})";
+  if (!json.completed() || r != expected) {
     std::cerr << __FUNCTION__ << std::endl;
-    std::cerr << os.str() << std::endl;
     return false;
   }
   return true;

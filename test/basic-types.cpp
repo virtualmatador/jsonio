@@ -9,10 +9,9 @@ bool t01() {
   jsonio::json json;
   std::istringstream is{text};
   is >> json;
-  std::ostringstream os;
-  os << json;
+  auto r = (std::ostringstream{} << json).str();
   if (!json.completed() || json.type() != jsonio::JsonType::J_LONG ||
-      os.str() != text) {
+      r != text) {
     std::cerr << __FUNCTION__ << std::endl;
     return false;
   }
@@ -24,10 +23,9 @@ bool t02() {
   jsonio::json json;
   std::istringstream is{text};
   is >> json;
-  std::ostringstream os;
-  os << json;
+  auto r = (std::ostringstream{} << json).str();
   if (!json.completed() || json.type() != jsonio::JsonType::J_STRING ||
-      os.str() != text) {
+      r != text) {
     std::cerr << __FUNCTION__ << std::endl;
     return false;
   }
@@ -39,10 +37,9 @@ bool t03() {
   jsonio::json json;
   std::istringstream is{text};
   is >> json;
-  std::ostringstream os;
-  os << json;
+  auto r = (std::ostringstream{} << json).str();
   if (!json.completed() || json.type() != jsonio::JsonType::J_BOOL ||
-      os.str() != text) {
+      r != text) {
     std::cerr << __FUNCTION__ << std::endl;
     return false;
   }
@@ -54,10 +51,9 @@ bool t04() {
   jsonio::json json;
   std::istringstream is{text};
   is >> json;
-  std::ostringstream os;
-  os << json;
+  auto r = (std::ostringstream{} << json).str();
   if (!json.completed() || json.type() != jsonio::JsonType::J_BOOL ||
-      os.str() != text) {
+      r != text) {
     std::cerr << __FUNCTION__ << std::endl;
     return false;
   }
@@ -69,10 +65,9 @@ bool t05() {
   jsonio::json json;
   std::istringstream is{text};
   is >> json;
-  std::ostringstream os;
-  os << json;
+  auto r = (std::ostringstream{} << json).str();
   if (!json.completed() || !json.is_null() ||
-      json.type() != jsonio::JsonType::J_NULL || os.str() != text) {
+      json.type() != jsonio::JsonType::J_NULL || r != text) {
     std::cerr << __FUNCTION__ << std::endl;
     return false;
   }
@@ -84,10 +79,9 @@ bool t06() {
   jsonio::json json;
   std::istringstream is{text};
   is >> json;
-  std::ostringstream os;
-  os << json;
+  auto r = (std::ostringstream{} << json).str();
   if (!json.completed() || json.type() != jsonio::JsonType::J_DOUBLE ||
-      os.str() != text) {
+      r != text) {
     std::cerr << __FUNCTION__ << std::endl;
     return false;
   }
