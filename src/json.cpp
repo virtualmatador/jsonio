@@ -547,39 +547,14 @@ std::size_t jsonio::json::read(std::istream &is,
       PARENT_TYPE::operator=(std::vector<std::byte>{});
       flags_ &= ~PHASE_COMPLETED;
       flags_ |= PHASE_OCTET_SIZE;
-      read_octet_size(is);
-      if (is.good()) {
-        flags_ &= ~PHASE_COMPLETED;
-        flags_ |= PHASE_OCTET_DATA;
-        read_octet_data(is);
-        if (is.good()) {
-          flags_ &= ~PHASE_COMPLETED;
-          flags_ |= PHASE_DELIMITER;
-          return read_delimiter(is, delimiters);
-        }
-      }
+      return read_octet_size(is, delimiters);
     }
     break;
   case PHASE_OCTET_SIZE:
-    read_octet_size(is);
-    if (is.good()) {
-      flags_ &= ~PHASE_COMPLETED;
-      flags_ |= PHASE_OCTET_DATA;
-      read_octet_data(is);
-      if (is.good()) {
-        flags_ &= ~PHASE_COMPLETED;
-        flags_ |= PHASE_DELIMITER;
-        return read_delimiter(is, delimiters);
-      }
-    }
+    return read_octet_size(is, delimiters);
     break;
   case PHASE_OCTET_DATA:
-    read_octet_data(is);
-    if (is.good()) {
-      flags_ &= ~PHASE_COMPLETED;
-      flags_ |= PHASE_DELIMITER;
-      return read_delimiter(is, delimiters);
-    }
+    return read_octet_data(is, delimiters);
     break;
   case PHASE_INT:
     return read_int(is, delimiters);
@@ -613,7 +588,7 @@ void jsonio::json::read_literal(std::istream &is, std::string_view literal) {
 
 std::size_t jsonio::json::read_base64_data(std::istream &is,
                                            const std::string &delimiters) {
-  std::size_t delimiter = -1;
+  auto delimiter = std::string::npos;
   char source;
   while (is >> source) {
     if (!std::isspace(source)) {
@@ -666,40 +641,51 @@ std::size_t jsonio::json::read_base64_data(std::istream &is,
   return delimiter;
 }
 
-void jsonio::json::read_octet_size(std::istream &is) {
+std::size_t jsonio::json::read_octet_size(std::istream &is,
+                                          const std::string &delimiters) {
   char source;
   while (is >> source) {
     if (!isspace(source)) {
       if (source != ')') {
         buffer_.append(1, source);
       } else {
-        break;
+        flags_ &= ~PHASE_COMPLETED;
+        flags_ |= PHASE_OCTET_DATA;
+        return read_octet_data(is, delimiters);
       }
     }
   }
+  return std::string::npos;
 }
 
-void jsonio::json::read_octet_data(std::istream &is) {
+std::size_t jsonio::json::read_octet_data(std::istream &is,
+                                          const std::string &delimiters) {
   char *end_ptr;
   std::size_t size = strtol(buffer_.c_str(), &end_ptr, 0);
   get_binary().reserve(size);
   if (*end_ptr == '\0') {
-    while (is.good() && get_binary().size() < size) {
+    while (is.good()) {
       auto pre_size = get_binary().size();
       get_binary().resize(size);
       auto read_size =
           is.readsome(reinterpret_cast<char *>(get_binary().data() + pre_size),
                       size - pre_size);
       get_binary().resize(pre_size + read_size);
+      if (get_binary().size() == size) {
+        flags_ &= ~PHASE_COMPLETED;
+        flags_ |= PHASE_DELIMITER;
+        return read_delimiter(is, delimiters);
+      }
     }
   } else {
     is.setstate(std::ios::iostate::_S_badbit);
   }
+  return std::string::npos;
 }
 
 std::size_t jsonio::json::read_int(std::istream &is,
                                    const std::string &delimiters) {
-  std::size_t delimiter = -1;
+  auto delimiter = std::string::npos;
   char source;
   while (is >> source) {
     if (!isspace(source)) {
@@ -731,7 +717,7 @@ std::size_t jsonio::json::read_int(std::istream &is,
 
 std::size_t jsonio::json::read_float(std::istream &is,
                                      const std::string &delimiters) {
-  std::size_t delimiter = -1;
+  auto delimiter = std::string::npos;
   char source;
   while (is >> source) {
     if (!isspace(source)) {
@@ -758,7 +744,7 @@ std::size_t jsonio::json::read_float(std::istream &is,
 
 std::size_t jsonio::json::read_delimiter(std::istream &is,
                                          const std::string &delimiters) {
-  std::size_t delimiter = -1;
+  auto delimiter = std::string::npos;
   buffer_.clear();
   if (delimiters == "\n") {
     flags_ |= PHASE_COMPLETED;

@@ -127,8 +127,8 @@ private:
   std::size_t read(std::istream &is, const std::string &delimiters);
   void read_literal(std::istream &is, std::string_view literal);
   std::size_t read_base64_data(std::istream &is, const std::string &delimiters);
-  void read_octet_size(std::istream &is);
-  void read_octet_data(std::istream &is);
+  std::size_t read_octet_size(std::istream &is, const std::string &delimiters);
+  std::size_t read_octet_data(std::istream &is, const std::string &delimiters);
   std::size_t read_int(std::istream &is, const std::string &delimiters);
   std::size_t read_float(std::istream &is, const std::string &delimiters);
   std::size_t read_delimiter(std::istream &is, const std::string &delimiters);
