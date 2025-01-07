@@ -88,8 +88,24 @@ bool t06() {
   return true;
 }
 
+bool t07() {
+  auto text = "base64;VVVV";
+  jsonio::json json;
+  std::istringstream{text} >> json;
+  auto r = (std::ostringstream{} << json).str();
+  if (!json.completed() || json.type() != jsonio::JsonType::J_BINARY ||
+      r != text || json.get_binary().size() != 3 ||
+      json.get_binary()[0] != std::byte{'U'} ||
+      json.get_binary()[1] != std::byte{'U'} ||
+      json.get_binary()[2] != std::byte{'U'}) {
+    std::cerr << __FUNCTION__ << std::endl;
+    return false;
+  }
+  return true;
+}
+
 int main() {
-  if (t01() && t02() && t03() && t04() && t05() && t06() && true) {
+  if (t01() && t02() && t03() && t04() && t05() && t06() && t07() && true) {
     return 0;
   }
   return -1;

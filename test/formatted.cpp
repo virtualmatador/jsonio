@@ -26,8 +26,7 @@ bool t02() {
   jsonio::json arr = jsonio::json_arr{};
   arr.get_array().emplace_back("a");
   arr.get_array().emplace_back(1L);
-  auto r = (std::ostringstream{} << arr.format().prettify().new_line_bracket())
-               .str();
+  auto r = (std::ostringstream{} << arr.format().prettify()).str();
   if (r != "[\n\t\"a\",\n\t1\n]") {
     std::cerr << __FUNCTION__ << std::endl;
     return false;
@@ -35,8 +34,20 @@ bool t02() {
   return true;
 }
 
+bool t03() {
+  jsonio::json obj = jsonio::json_obj{};
+  std::istringstream{"base64;ICAg"} >> obj["a"];
+  auto r =
+      (std::ostringstream{} << obj.format().prettify().bytes_as_binary()).str();
+  if (r != "{\n\t\"a\": octet;3;   \n}") {
+    std::cerr << __FUNCTION__ << std::endl;
+    return false;
+  }
+  return true;
+}
+
 int main() {
-  if (t01() && t02() && true) {
+  if (t01() && t02() && t03() && true) {
     return 0;
   }
   return -1;

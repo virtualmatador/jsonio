@@ -24,6 +24,8 @@ jsonio::json::json(std::string &&string_value) {
 
 jsonio::json::json(const char *string_value) { *this = string_value; }
 
+jsonio::json::json(std::string_view string_value) { *this = string_value; }
+
 jsonio::json::json(const long &long_value) { *this = long_value; }
 
 jsonio::json::json(const int &int_value) { *this = int_value; }
@@ -34,12 +36,12 @@ jsonio::json::json(const double &double_value) { *this = double_value; }
 
 jsonio::json::json(const bool &bool_value) { *this = bool_value; }
 
-jsonio::json::json(const json_obj &json_object_value) {
-  *this = json_object_value;
+jsonio::json::json(const std::vector<std::byte> &binary_value) {
+  *this = binary_value;
 }
 
-jsonio::json::json(json_obj &&json_object_value) {
-  *this = std::move(json_object_value);
+jsonio::json::json(std::vector<std::byte> &&binary_value) {
+  *this = std::move(binary_value);
 }
 
 jsonio::json::json(const json_arr &json_array_value) {
@@ -50,11 +52,19 @@ jsonio::json::json(json_arr &&json_array_value) {
   *this = std::move(json_array_value);
 }
 
+jsonio::json::json(const json_obj &json_object_value) {
+  *this = json_object_value;
+}
+
+jsonio::json::json(json_obj &&json_object_value) {
+  *this = std::move(json_object_value);
+}
+
 jsonio::json &jsonio::json::operator=(const jsonio::json &source) noexcept {
   if (this != &source) {
     PARENT_TYPE::operator=(*(PARENT_TYPE *)&source);
     flags_ = source.flags_;
-    binary_ = source.binary_;
+    buffer_ = source.buffer_;
   }
   return *this;
 }
@@ -64,8 +74,8 @@ jsonio::json &jsonio::json::operator=(jsonio::json &&source) noexcept {
     PARENT_TYPE::operator=(std::move(*(PARENT_TYPE *)&source));
     flags_ = source.flags_;
     source.flags_ = PHASE_START;
-    binary_ = std::move(source.binary_);
-    source.binary_.clear();
+    buffer_ = std::move(source.buffer_);
+    source.buffer_.clear();
   }
   return *this;
 }
@@ -77,19 +87,25 @@ jsonio::json &jsonio::json::operator=(const void *null_value) {
 }
 
 jsonio::json &jsonio::json::operator=(const std::string &string_value) {
-  PARENT_TYPE::operator=(json_string(string_value));
+  PARENT_TYPE::operator=(json_string{string_value});
   flags_ = PHASE_COMPLETED;
   return *this;
 }
 
 jsonio::json &jsonio::json::operator=(std::string &&string_value) {
-  PARENT_TYPE::operator=(json_string(std::move(string_value)));
+  PARENT_TYPE::operator=(json_string{std::move(string_value)});
   flags_ = PHASE_COMPLETED;
   return *this;
 }
 
 jsonio::json &jsonio::json::operator=(const char *string_value) {
-  PARENT_TYPE::operator=(json_string(string_value));
+  PARENT_TYPE::operator=(json_string{string_value});
+  flags_ = PHASE_COMPLETED;
+  return *this;
+}
+
+jsonio::json &jsonio::json::operator=(std::string_view string_value) {
+  PARENT_TYPE::operator=(json_string{string_value});
   flags_ = PHASE_COMPLETED;
   return *this;
 }
@@ -125,14 +141,14 @@ jsonio::json &jsonio::json::operator=(const bool &bool_value) {
 }
 
 jsonio::json &
-jsonio::json::operator=(const jsonio::json_obj &json_object_value) {
-  PARENT_TYPE::operator=(json_object_value);
+jsonio::json::operator=(const std::vector<std::byte> &binary_value) {
+  PARENT_TYPE::operator=(binary_value);
   flags_ = PHASE_COMPLETED;
   return *this;
 }
 
-jsonio::json &jsonio::json::operator=(jsonio::json_obj &&json_object_value) {
-  PARENT_TYPE::operator=(std::move(json_object_value));
+jsonio::json &jsonio::json::operator=(std::vector<std::byte> &&binary_value) {
+  PARENT_TYPE::operator=(std::move(binary_value));
   flags_ = PHASE_COMPLETED;
   return *this;
 }
@@ -146,6 +162,19 @@ jsonio::json::operator=(const jsonio::json_arr &json_array_value) {
 
 jsonio::json &jsonio::json::operator=(jsonio::json_arr &&json_array_value) {
   PARENT_TYPE::operator=(std::move(json_array_value));
+  flags_ = PHASE_COMPLETED;
+  return *this;
+}
+
+jsonio::json &
+jsonio::json::operator=(const jsonio::json_obj &json_object_value) {
+  PARENT_TYPE::operator=(json_object_value);
+  flags_ = PHASE_COMPLETED;
+  return *this;
+}
+
+jsonio::json &jsonio::json::operator=(jsonio::json_obj &&json_object_value) {
+  PARENT_TYPE::operator=(std::move(json_object_value));
   flags_ = PHASE_COMPLETED;
   return *this;
 }
@@ -322,6 +351,20 @@ void jsonio::json::steal(const json &source, bool convert) {
       break;
     }
     break;
+  case JsonType::J_BINARY:
+    switch (source.type()) {
+    case JsonType::J_BINARY:
+      get_binary() = source.get_binary();
+      break;
+    case JsonType::J_ARRAY:
+      if (convert) {
+        if (source.get_array().size() == 1) {
+          steal(source.get_array()[0], convert);
+        }
+      }
+      break;
+    }
+    break;
   case JsonType::J_ARRAY:
     switch (source.type()) {
     case JsonType::J_NULL:
@@ -345,6 +388,13 @@ void jsonio::json::steal(const json &source, bool convert) {
     case JsonType::J_OBJECT:
       get_object().steal(source.get_object(), convert);
       break;
+    case JsonType::J_ARRAY:
+      if (convert) {
+        if (source.get_array().size() == 1) {
+          steal(source.get_array()[0], convert);
+        }
+      }
+      break;
     }
     break;
   }
@@ -361,127 +411,367 @@ bool jsonio::json::operator==(const json &that) const {
 }
 
 bool jsonio::json::completed() const {
-  return (flags_ & MASK_PHASE) == PHASE_COMPLETED;
+  return (flags_ & PHASE_COMPLETED) == PHASE_COMPLETED;
 }
 
 std::size_t jsonio::json::read(std::istream &is,
                                const std::string &delimiters) {
-  std::size_t delimiter = -1;
-  if ((flags_ & MASK_PHASE) == PHASE_COMPLETED) {
+  if ((flags_ & PHASE_COMPLETED) == PHASE_COMPLETED) {
     flags_ = PHASE_START;
   }
-  if ((flags_ & MASK_PHASE) == PHASE_START) {
+  if ((flags_ & PHASE_COMPLETED) == PHASE_START) {
     char source;
     while (is >> source) {
       if (!isspace(source)) {
+        buffer_.clear();
         if (source == ']') {
-          delimiter = delimiters.find(source);
-          flags_ &= ~MASK_PHASE;
-          flags_ |= PHASE_COMPLETED;
-          flags_ |= EMPTY_VALUE;
+          if (auto delimiter = delimiters.find(source);
+              delimiter != std::string::npos) {
+            flags_ |= PHASE_COMPLETED;
+            flags_ |= EMPTY_VALUE;
+            return delimiter;
+          } else {
+            is.setstate(std::ios_base::iostate::_S_badbit);
+          }
         } else if (source == '{') {
-          flags_ &= ~MASK_PHASE;
+          flags_ &= ~PHASE_COMPLETED;
           flags_ |= PHASE_OBJECT;
-          PARENT_TYPE::operator=(json_obj(json_obj::SKIP_PREFIX));
+          PARENT_TYPE::operator=(json_obj{json_obj::SKIP_PREFIX});
         } else if (source == '[') {
-          flags_ &= ~MASK_PHASE;
+          flags_ &= ~PHASE_COMPLETED;
           flags_ |= PHASE_ARRAY;
-          PARENT_TYPE::operator=(json_arr(json_arr::SKIP_PREFIX));
+          PARENT_TYPE::operator=(json_arr{json_arr::SKIP_PREFIX});
         } else if (source == '\"') {
-          flags_ &= ~MASK_PHASE;
+          flags_ &= ~PHASE_COMPLETED;
           flags_ |= PHASE_STRING;
-          PARENT_TYPE::operator=(json_string());
+          PARENT_TYPE::operator=(json_string{});
+        } else if (source == null_[0]) {
+          flags_ &= ~PHASE_COMPLETED;
+          flags_ |= PHASE_NULL;
+        } else if (source == true_[0]) {
+          flags_ &= ~PHASE_COMPLETED;
+          flags_ |= PHASE_TRUE;
+        } else if (source == false_[0]) {
+          flags_ &= ~PHASE_COMPLETED;
+          flags_ |= PHASE_FALSE;
+        } else if (source == octet_[0]) {
+          flags_ &= ~PHASE_COMPLETED;
+          flags_ |= PHASE_OCTET_LITERAL;
+        } else if (source == base64_[0]) {
+          flags_ &= ~PHASE_COMPLETED;
+          flags_ |= PHASE_BASE64_LITERAl;
+        } else if (source == '.') {
+          flags_ &= ~PHASE_COMPLETED;
+          flags_ |= PHASE_FLOAT;
+          buffer_.append(1, source);
+        } else if ((source >= '0' && source <= '9') || source == '+' ||
+                   source == '-') {
+          flags_ &= ~PHASE_COMPLETED;
+          flags_ |= PHASE_INT;
+          buffer_.append(1, source);
         } else {
-          flags_ &= ~MASK_PHASE;
-          flags_ |= PHASE_BINARY;
-          binary_.clear();
-          binary_.append(1, source);
+          is.setstate(std::ios_base::iostate::_S_badbit);
+          return std::string::npos;
         }
         break;
       }
     }
   }
-  if ((flags_ & MASK_PHASE) == PHASE_OBJECT) {
+  switch (flags_ & PHASE_COMPLETED) {
+  case PHASE_OBJECT:
     std::get<json_obj>(**this).read(is);
     if (is.good()) {
-      flags_ &= ~MASK_PHASE;
+      flags_ &= ~PHASE_COMPLETED;
       flags_ |= PHASE_DELIMITER;
+      return read_delimiter(is, delimiters);
     }
-  }
-  if ((flags_ & MASK_PHASE) == PHASE_ARRAY) {
+    break;
+  case PHASE_ARRAY:
     std::get<json_arr>(**this).read(is);
     if (is.good()) {
-      flags_ &= ~MASK_PHASE;
+      flags_ &= ~PHASE_COMPLETED;
       flags_ |= PHASE_DELIMITER;
+      return read_delimiter(is, delimiters);
     }
-  }
-  if ((flags_ & MASK_PHASE) == PHASE_STRING) {
+    break;
+  case PHASE_STRING:
     std::get<json_string>(**this).read(is);
     if (is.good()) {
-      flags_ &= ~MASK_PHASE;
+      flags_ &= ~PHASE_COMPLETED;
       flags_ |= PHASE_DELIMITER;
+      return read_delimiter(is, delimiters);
+    }
+    break;
+  case PHASE_NULL:
+    read_literal(is, null_);
+    if (is.good()) {
+      PARENT_TYPE::operator=({});
+      flags_ &= ~PHASE_COMPLETED;
+      flags_ |= PHASE_DELIMITER;
+      return read_delimiter(is, delimiters);
+    }
+    break;
+  case PHASE_TRUE:
+    read_literal(is, true_);
+    if (is.good()) {
+      PARENT_TYPE::operator=(true);
+      flags_ &= ~PHASE_COMPLETED;
+      flags_ |= PHASE_DELIMITER;
+      return read_delimiter(is, delimiters);
+    }
+    break;
+  case PHASE_FALSE:
+    read_literal(is, false_);
+    if (is.good()) {
+      PARENT_TYPE::operator=(false);
+      flags_ &= ~PHASE_COMPLETED;
+      flags_ |= PHASE_DELIMITER;
+      return read_delimiter(is, delimiters);
+    }
+    break;
+  case PHASE_BASE64_LITERAl:
+    read_literal(is, base64_);
+    if (is.good()) {
+      PARENT_TYPE::operator=(std::vector<std::byte>{});
+      flags_ &= ~PHASE_COMPLETED;
+      flags_ |= PHASE_BASE64_DATA;
+      return read_base64_data(is, delimiters);
+    }
+    break;
+  case PHASE_BASE64_DATA:
+    return read_base64_data(is, delimiters);
+    break;
+  case PHASE_OCTET_LITERAL:
+    read_literal(is, octet_);
+    if (is.good()) {
+      PARENT_TYPE::operator=(std::vector<std::byte>{});
+      flags_ &= ~PHASE_COMPLETED;
+      flags_ |= PHASE_OCTET_SIZE;
+      read_octet_size(is);
+      if (is.good()) {
+        flags_ &= ~PHASE_COMPLETED;
+        flags_ |= PHASE_OCTET_DATA;
+        read_octet_data(is);
+        if (is.good()) {
+          flags_ &= ~PHASE_COMPLETED;
+          flags_ |= PHASE_DELIMITER;
+          return read_delimiter(is, delimiters);
+        }
+      }
+    }
+    break;
+  case PHASE_OCTET_SIZE:
+    read_octet_size(is);
+    if (is.good()) {
+      flags_ &= ~PHASE_COMPLETED;
+      flags_ |= PHASE_OCTET_DATA;
+      read_octet_data(is);
+      if (is.good()) {
+        flags_ &= ~PHASE_COMPLETED;
+        flags_ |= PHASE_DELIMITER;
+        return read_delimiter(is, delimiters);
+      }
+    }
+    break;
+  case PHASE_OCTET_DATA:
+    read_octet_data(is);
+    if (is.good()) {
+      flags_ &= ~PHASE_COMPLETED;
+      flags_ |= PHASE_DELIMITER;
+      return read_delimiter(is, delimiters);
+    }
+    break;
+  case PHASE_INT:
+    return read_int(is, delimiters);
+    break;
+  case PHASE_FLOAT:
+    return read_float(is, delimiters);
+    break;
+  case PHASE_DELIMITER:
+    return read_delimiter(is, delimiters);
+    break;
+  }
+  return std::string::npos;
+}
+
+void jsonio::json::read_literal(std::istream &is, std::string_view literal) {
+  char source;
+  while (is >> source) {
+    if (source == literal[buffer_.size() + 1]) {
+      if (buffer_.size() + 2 == literal.size()) {
+        buffer_.clear();
+        break;
+      } else {
+        buffer_.append(1, source);
+      }
+    } else {
+      is.setstate(std::ios::iostate::_S_badbit);
+      break;
     }
   }
-  if ((flags_ & MASK_PHASE) == PHASE_BINARY) {
+}
+
+std::size_t jsonio::json::read_base64_data(std::istream &is,
+                                           const std::string &delimiters) {
+  std::size_t delimiter = -1;
+  char source;
+  while (is >> source) {
+    if (!std::isspace(source)) {
+      delimiter = delimiters.find(source);
+      if (delimiter == std::string::npos) {
+        buffer_.append(1, source);
+        if (buffer_.size() == 4) {
+          if (buffer_[3] != '=') {
+            get_binary().resize(get_binary().size() + 3);
+            b64_decode_chunk(
+                reinterpret_cast<const char(&)[4]>(*buffer_.data()),
+                reinterpret_cast<std::byte(&)[3]>(
+                    get_binary().at(get_binary().size() - 3)));
+            buffer_.clear();
+          } else {
+            if (buffer_[2] != '=') {
+              buffer_[3] = 'A';
+              std::byte dest[3];
+              b64_decode_chunk(
+                  reinterpret_cast<const char(&)[4]>(*buffer_.data()), dest);
+              std::copy(dest, dest + 2,
+                        std::back_insert_iterator(get_binary()));
+              buffer_.clear();
+            } else {
+              buffer_[2] = buffer_[3] = 'A';
+              std::byte dest[3];
+              b64_decode_chunk(
+                  reinterpret_cast<const char(&)[4]>(*buffer_.data()), dest);
+              std::copy(dest, dest + 1,
+                        std::back_insert_iterator(get_binary()));
+              buffer_.clear();
+            }
+            flags_ &= ~PHASE_COMPLETED;
+            flags_ |= PHASE_DELIMITER;
+            return read_delimiter(is, delimiters);
+          }
+        }
+      } else {
+        break;
+      }
+    }
+  }
+  if (is.good() || delimiters == "\n") {
+    if (buffer_.size() == 0) {
+      flags_ |= PHASE_COMPLETED;
+    } else {
+      is.setstate(std::ios::iostate::_S_badbit);
+    }
+  }
+  return delimiter;
+}
+
+void jsonio::json::read_octet_size(std::istream &is) {
+  char source;
+  while (is >> source) {
+    if (!isspace(source)) {
+      if (source != ')') {
+        buffer_.append(1, source);
+      } else {
+        break;
+      }
+    }
+  }
+}
+
+void jsonio::json::read_octet_data(std::istream &is) {
+  char *end_ptr;
+  std::size_t size = strtol(buffer_.c_str(), &end_ptr, 0);
+  get_binary().reserve(size);
+  if (*end_ptr == '\0') {
+    while (is.good() && get_binary().size() < size) {
+      auto pre_size = get_binary().size();
+      get_binary().resize(size);
+      auto read_size =
+          is.readsome(reinterpret_cast<char *>(get_binary().data() + pre_size),
+                      size - pre_size);
+      get_binary().resize(pre_size + read_size);
+    }
+  } else {
+    is.setstate(std::ios::iostate::_S_badbit);
+  }
+}
+
+std::size_t jsonio::json::read_int(std::istream &is,
+                                   const std::string &delimiters) {
+  std::size_t delimiter = -1;
+  char source;
+  while (is >> source) {
+    if (!isspace(source)) {
+      delimiter = delimiters.find(source);
+      if (delimiter == std::string::npos) {
+        buffer_.append(1, source);
+        if (source == '.') {
+          flags_ &= ~PHASE_COMPLETED;
+          flags_ |= PHASE_FLOAT;
+          return read_float(is, delimiters);
+        }
+      } else {
+        break;
+      }
+    }
+  }
+  if (is.good() || delimiters == "\n") {
+    char *end_ptr;
+    PARENT_TYPE::operator=(strtol(buffer_.c_str(), &end_ptr, 0));
+    if (*end_ptr == '\0') {
+      flags_ |= PHASE_COMPLETED;
+    } else {
+      is.setstate(std::ios::iostate::_S_badbit);
+    }
+    buffer_.clear();
+  }
+  return delimiter;
+}
+
+std::size_t jsonio::json::read_float(std::istream &is,
+                                     const std::string &delimiters) {
+  std::size_t delimiter = -1;
+  char source;
+  while (is >> source) {
+    if (!isspace(source)) {
+      delimiter = delimiters.find(source);
+      if (delimiter == std::string::npos) {
+        buffer_.append(1, source);
+      } else {
+        break;
+      }
+    }
+  }
+  if (is.good() || delimiters == "\n") {
+    char *end_ptr;
+    PARENT_TYPE::operator=(strtod(buffer_.c_str(), &end_ptr));
+    if (*end_ptr == '\0') {
+      flags_ |= PHASE_COMPLETED;
+    } else {
+      is.setstate(std::ios::iostate::_S_badbit);
+    }
+    buffer_.clear();
+  }
+  return delimiter;
+}
+
+std::size_t jsonio::json::read_delimiter(std::istream &is,
+                                         const std::string &delimiters) {
+  std::size_t delimiter = -1;
+  buffer_.clear();
+  if (delimiters == "\n") {
+    flags_ |= PHASE_COMPLETED;
+  } else {
     char source;
     while (is >> source) {
       delimiter = delimiters.find(source);
-      if (delimiter == std::string::npos) {
-        binary_.append(1, source);
-      } else {
+      if (delimiter != std::string::npos) {
+        flags_ |= PHASE_COMPLETED;
         break;
-      }
-    }
-    if (is.good() || delimiters == "\n") {
-      binary_.erase(std::find_if(binary_.rbegin(), binary_.rend(),
-                                 [](const char c) { return !std::isspace(c); })
-                        .base(),
-                    binary_.end());
-      if (binary_ == "null") {
-        PARENT_TYPE::operator=(PARENT_TYPE{});
-        flags_ &= ~MASK_PHASE;
-        flags_ |= PHASE_COMPLETED;
-      } else if (binary_ == "true") {
-        PARENT_TYPE::operator=(true);
-        flags_ &= ~MASK_PHASE;
-        flags_ |= PHASE_COMPLETED;
-      } else if (binary_ == "false") {
-        PARENT_TYPE::operator=(false);
-        flags_ &= ~MASK_PHASE;
-        flags_ |= PHASE_COMPLETED;
-      } else {
-        char *end_ptr;
-        if (binary_.find('.') != std::string::npos) {
-          PARENT_TYPE::operator=(strtod(binary_.c_str(), &end_ptr));
-        } else {
-          PARENT_TYPE::operator=(strtol(binary_.c_str(), &end_ptr, 0));
-        }
-        if (*end_ptr == '\0') {
-          flags_ &= ~MASK_PHASE;
-          flags_ |= PHASE_COMPLETED;
-        } else {
-          is.setstate(std::ios::iostate::_S_badbit);
-        }
-      }
-      binary_.clear();
-    }
-  }
-  if ((flags_ & MASK_PHASE) == PHASE_DELIMITER) {
-    if (delimiters == "\n") {
-      flags_ &= ~MASK_PHASE;
-      flags_ |= PHASE_COMPLETED;
-    } else {
-      char source;
-      while (is >> source) {
-        delimiter = delimiters.find(source);
-        if (delimiter != std::string::npos) {
-          flags_ &= ~MASK_PHASE;
-          flags_ |= PHASE_COMPLETED;
-          break;
-        } else if (!isspace(source)) {
-          is.setstate(std::ios::iostate::_S_badbit);
-          break;
-        }
+      } else if (!isspace(source)) {
+        is.setstate(std::ios::iostate::_S_badbit);
+        break;
       }
     }
   }
@@ -498,7 +788,7 @@ void jsonio::json::write(std::ostream &os, bool separate, int indents,
           os << " ";
         }
       }
-      os << "null";
+      os << null_;
       break;
     case JsonType::J_STRING:
       if (flags & Format_Options::prettify) {
@@ -533,7 +823,42 @@ void jsonio::json::write(std::ostream &os, bool separate, int indents,
           os << " ";
         }
       }
-      os << (get_bool() ? "true" : "false");
+      os << (get_bool() ? true_ : false_);
+      break;
+    case JsonType::J_BINARY:
+      if (flags & Format_Options::prettify) {
+        if (separate) {
+          os << " ";
+        }
+      }
+      if ((flags & Format_Options::bytes_as_binary)) {
+        os << octet_ << get_binary().size() << ';';
+        os.write(reinterpret_cast<const char *>(get_binary().data()),
+                 get_binary().size());
+      } else {
+        os << base64_;
+        std::size_t i = 0;
+        char chunk[4];
+        for (; i + 2 < get_binary().size(); i += 3) {
+          b64_encode_chunk(reinterpret_cast<const std::byte(&)[3]>(
+                               *(get_binary().data() + i)),
+                           chunk);
+          os.write(chunk, sizeof(chunk));
+        }
+        if (i == get_binary().size() - 1) {
+          std::byte source[3]{get_binary().data()[i], std::byte{0},
+                              std::byte{0}};
+          b64_encode_chunk(source, chunk);
+          chunk[2] = chunk[3] = '=';
+          os.write(chunk, sizeof(chunk));
+        } else if (i == get_binary().size() - 2) {
+          std::byte source[3]{get_binary().data()[i],
+                              get_binary().data()[i + 1], std::byte{0}};
+          b64_encode_chunk(source, chunk);
+          chunk[3] = '=';
+          os.write(chunk, sizeof(chunk));
+        }
+      }
       break;
     case JsonType::J_ARRAY:
       if (flags & Format_Options::prettify) {
@@ -563,19 +888,31 @@ void jsonio::json::write(std::ostream &os, bool separate, int indents,
   }
 }
 
+void jsonio::json::b64_encode_chunk(const std::byte (&source)[3],
+                                    char (&dest)[4]) const {
+  dest[0] = base64_chars_[static_cast<std::size_t>(source[0]) / 4];
+  dest[1] = base64_chars_[(static_cast<std::size_t>(source[0]) % 4) * 16 +
+                          static_cast<std::size_t>(source[1]) / 16];
+  dest[2] = base64_chars_[(static_cast<std::size_t>(source[1]) % 16) * 4 +
+                          static_cast<std::size_t>(source[2]) / 64];
+  dest[3] = base64_chars_[static_cast<std::size_t>(source[2]) % 64];
+}
+
+void jsonio::json::b64_decode_chunk(const char (&source)[4],
+                                    std::byte (&dest)[3]) const {
+  dest[0] = static_cast<std::byte>(base64_chars_.find(source[0]) * 4 +
+                                   base64_chars_.find(source[1]) / 16);
+  dest[1] = static_cast<std::byte>((base64_chars_.find(source[1]) % 16) * 16 +
+                                   base64_chars_.find(source[2]) / 4);
+  dest[2] = static_cast<std::byte>((base64_chars_.find(source[2]) % 4) * 64 +
+                                   base64_chars_.find(source[3]));
+}
+
 jsonio::JsonType jsonio::json::type() const {
   if (!has_value()) {
     return JsonType::J_NULL;
   }
   return static_cast<JsonType>((*this)->index());
-}
-
-jsonio::json &jsonio::json::operator[](const std::string &key) {
-  return std::get<json_obj>(**this).operator[](key);
-}
-
-const jsonio::json &jsonio::json::operator[](const std::string &key) const {
-  return std::get<json_obj>(**this).operator[](key);
 }
 
 jsonio::json &jsonio::json::operator[](std::size_t index) {
@@ -584,6 +921,22 @@ jsonio::json &jsonio::json::operator[](std::size_t index) {
 
 const jsonio::json &jsonio::json::operator[](std::size_t index) const {
   return std::get<json_arr>(**this).operator[](index);
+}
+
+jsonio::json *jsonio::json::at(std::size_t index) {
+  return std::get<json_arr>(**this).at(index);
+}
+
+const jsonio::json *jsonio::json::at(std::size_t index) const {
+  return std::get<json_arr>(**this).at(index);
+}
+
+jsonio::json &jsonio::json::operator[](const std::string &key) {
+  return std::get<json_obj>(**this).operator[](key);
+}
+
+const jsonio::json &jsonio::json::operator[](const std::string &key) const {
+  return std::get<json_obj>(**this).operator[](key);
 }
 
 jsonio::json *jsonio::json::at(const std::string &key) {
@@ -625,13 +978,13 @@ bool &jsonio::json::get_bool() {
 
 const bool &jsonio::json::get_bool() const { return std::get<bool>(**this); }
 
-jsonio::json_obj &jsonio::json::get_object() {
-  return const_cast<jsonio::json_obj &>(
-      static_cast<const json &>(*this).get_object());
+std::vector<std::byte> &jsonio::json::get_binary() {
+  return const_cast<std::vector<std::byte> &>(
+      static_cast<const json &>(*this).get_binary());
 }
 
-const jsonio::json_obj &jsonio::json::get_object() const {
-  return std::get<json_obj>(**this);
+const std::vector<std::byte> &jsonio::json::get_binary() const {
+  return std::get<std::vector<std::byte>>(**this);
 }
 
 jsonio::json_arr &jsonio::json::get_array() {
@@ -640,6 +993,15 @@ jsonio::json_arr &jsonio::json::get_array() {
 
 const jsonio::json_arr &jsonio::json::get_array() const {
   return std::get<json_arr>(**this);
+}
+
+jsonio::json_obj &jsonio::json::get_object() {
+  return const_cast<jsonio::json_obj &>(
+      static_cast<const json &>(*this).get_object());
+}
+
+const jsonio::json_obj &jsonio::json::get_object() const {
+  return std::get<json_obj>(**this);
 }
 
 int jsonio::json::get_int() const {

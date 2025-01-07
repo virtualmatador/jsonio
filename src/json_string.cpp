@@ -12,6 +12,10 @@ jsonio::json_string::json_string(std::string &&text) noexcept {
 
 jsonio::json_string::json_string(const char *text) noexcept { *this = text; }
 
+jsonio::json_string::json_string(std::string_view text) noexcept {
+  *this = text;
+}
+
 jsonio::json_string::json_string(const jsonio::json_string &source) noexcept {
   *this = source;
 }
@@ -62,10 +66,18 @@ jsonio::json_string &jsonio::json_string::operator=(const char *text) noexcept {
   return *this;
 }
 
+jsonio::json_string &
+jsonio::json_string::operator=(std::string_view text) noexcept {
+  flags_ = PHASE_COMPLETED;
+  std::string::operator=(text);
+  check_escape();
+  return *this;
+}
+
 jsonio::json_string::~json_string() noexcept {}
 
 bool jsonio::json_string::completed() const {
-  return (flags_ & MASK_PHASE) == PHASE_COMPLETED;
+  return (flags_ & PHASE_COMPLETED) == PHASE_COMPLETED;
 }
 
 void jsonio::json_string::check_escape() {
@@ -78,15 +90,15 @@ void jsonio::json_string::check_escape() {
 }
 
 void jsonio::json_string::read(std::istream &is) {
-  if ((flags_ & MASK_PHASE) == PHASE_COMPLETED) {
+  if ((flags_ & PHASE_COMPLETED) == PHASE_COMPLETED) {
     flags_ = PHASE_START;
   }
-  if ((flags_ & MASK_PHASE) == PHASE_START) {
-    flags_ &= ~MASK_PHASE;
+  if ((flags_ & PHASE_COMPLETED) == PHASE_START) {
+    flags_ &= ~PHASE_COMPLETED;
     flags_ |= PHASE_TEXT;
     std::string::clear();
   }
-  if ((flags_ & MASK_PHASE) == PHASE_TEXT) {
+  if ((flags_ & PHASE_COMPLETED) == PHASE_TEXT) {
     char source;
     while (is.get(source)) {
       if (flags_ & ESCAPING) {
@@ -106,7 +118,6 @@ void jsonio::json_string::read(std::istream &is) {
           flags_ |= ESCAPING;
         }
       } else {
-        flags_ &= ~MASK_PHASE;
         flags_ |= PHASE_COMPLETED;
         break;
       }

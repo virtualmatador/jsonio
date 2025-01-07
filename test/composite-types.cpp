@@ -5,7 +5,7 @@
 #include <json.h>
 
 bool t01() {
-  auto text = "[\"one\",\"two\",\"three\"]";
+  auto text = "[\"one\",\"two\",\"three\",base64;ICA=]";
   jsonio::json json;
   std::istringstream is{text};
   is >> json;

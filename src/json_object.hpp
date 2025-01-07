@@ -31,8 +31,7 @@ public:
     PHASE_KEY_TEXT = 0x0002,
     PHASE_COLON = 0x0003,
     PHASE_VALUE = 0x0004,
-    PHASE_COMPLETED = 0x0005,
-    MASK_PHASE = 0x0007,
+    PHASE_COMPLETED = 0x0007,
     SKIP_PREFIX = 0x0008,
   };
 
@@ -83,7 +82,9 @@ public:
 
   ~json_object() noexcept {}
 
-  bool completed() const { return (flags_ & MASK_PHASE) == PHASE_COMPLETED; }
+  bool completed() const {
+    return (flags_ & PHASE_COMPLETED) == PHASE_COMPLETED;
+  }
 
   json &operator[](const std::string &key) {
     auto pair = PARENT_TYPE::find(key);
@@ -123,20 +124,20 @@ public:
   }
 
   void read(std::istream &is) {
-    if ((flags_ & MASK_PHASE) == PHASE_COMPLETED) {
+    if ((flags_ & PHASE_COMPLETED) == PHASE_COMPLETED) {
       flags_ = PHASE_START;
     }
-    if ((flags_ & MASK_PHASE) == PHASE_START) {
+    if ((flags_ & PHASE_COMPLETED) == PHASE_START) {
       PARENT_TYPE::clear();
       if (flags_ & SKIP_PREFIX) {
-        flags_ &= ~MASK_PHASE;
+        flags_ &= ~PHASE_COMPLETED;
         flags_ |= PHASE_KEY_START;
       } else {
         char source;
         while (is >> source) {
           if (!isspace(source)) {
             if (source == '{') {
-              flags_ &= ~MASK_PHASE;
+              flags_ &= ~PHASE_COMPLETED;
               flags_ |= PHASE_KEY_START;
             } else {
               flags_ = PHASE_START;
@@ -147,17 +148,16 @@ public:
         }
       }
     }
-    if ((flags_ & MASK_PHASE) == PHASE_KEY_START) {
+    if ((flags_ & PHASE_COMPLETED) == PHASE_KEY_START) {
       key_.flags_ = json_string::PHASE_START;
       char source;
       while (is >> source) {
         if (source == '\"') {
-          flags_ &= ~MASK_PHASE;
+          flags_ &= ~PHASE_COMPLETED;
           flags_ |= PHASE_KEY_TEXT;
           break;
         } else if (source == '}') {
           if (PARENT_TYPE::size() == 0) {
-            flags_ &= ~MASK_PHASE;
             flags_ |= PHASE_COMPLETED;
           } else {
             flags_ = PHASE_START;
@@ -171,19 +171,19 @@ public:
         }
       }
     }
-    if ((flags_ & MASK_PHASE) == PHASE_KEY_TEXT) {
+    if ((flags_ & PHASE_COMPLETED) == PHASE_KEY_TEXT) {
       key_.read(is);
       if (is.good()) {
-        flags_ &= ~MASK_PHASE;
+        flags_ &= ~PHASE_COMPLETED;
         flags_ |= PHASE_COLON;
       }
     }
-    if ((flags_ & MASK_PHASE) == PHASE_COLON) {
+    if ((flags_ & PHASE_COMPLETED) == PHASE_COLON) {
       char source;
       while (is >> source) {
         if (!std::isspace(source)) {
           if (source == ':') {
-            flags_ &= ~MASK_PHASE;
+            flags_ &= ~PHASE_COMPLETED;
             flags_ |= PHASE_VALUE;
           } else {
             is.setstate(std::ios::iostate::_S_badbit);
@@ -192,7 +192,7 @@ public:
         }
       }
     }
-    if ((flags_ & MASK_PHASE) == PHASE_VALUE) {
+    if ((flags_ & PHASE_COMPLETED) == PHASE_VALUE) {
       const std::string delimiters = ",}";
       std::size_t delimiter = value_->read(is, delimiters);
       if (is.good()) {
@@ -200,10 +200,9 @@ public:
         bool append = true;
         if (delimiters[delimiter] == ',') {
           read_again = true;
-          flags_ &= ~MASK_PHASE;
+          flags_ &= ~PHASE_COMPLETED;
           flags_ |= PHASE_KEY_START;
         } else if (delimiters[delimiter] == '}') {
-          flags_ &= ~MASK_PHASE;
           flags_ |= PHASE_COMPLETED;
         } else {
           append = false;

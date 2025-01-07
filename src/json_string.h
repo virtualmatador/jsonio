@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <string_view>
 #include <variant>
 
 namespace jsonio {
@@ -15,8 +16,7 @@ private:
   enum : unsigned int {
     PHASE_START = 0x0000,
     PHASE_TEXT = 0x0001,
-    PHASE_COMPLETED = 0x0002,
-    MASK_PHASE = 0x0003,
+    PHASE_COMPLETED = 0x0003,
     ESCAPING = 0x0004,
     ESCAPED = 0x0008,
   };
@@ -26,11 +26,13 @@ public:
   json_string(const std::string &text) noexcept;
   json_string(std::string &&text) noexcept;
   json_string(const char *text) noexcept;
+  json_string(std::string_view text) noexcept;
   json_string(const json_string &source) noexcept;
   json_string(json_string &&source) noexcept;
   json_string &operator=(const std::string &text) noexcept;
   json_string &operator=(std::string &&text) noexcept;
   json_string &operator=(const char *text) noexcept;
+  json_string &operator=(std::string_view text) noexcept;
   json_string &operator=(const json_string &source) noexcept;
   json_string &operator=(json_string &&source) noexcept;
   ~json_string() noexcept;
