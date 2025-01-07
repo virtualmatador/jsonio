@@ -644,7 +644,7 @@ std::size_t jsonio::json::read_octet_size(std::istream &is,
   char source;
   while (is >> source) {
     if (!isspace(source)) {
-      if (source != ')') {
+      if (source != ';') {
         buffer_.append(1, source);
       } else {
         flags_ &= ~PHASE_COMPLETED;
