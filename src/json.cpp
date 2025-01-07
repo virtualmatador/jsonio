@@ -669,7 +669,9 @@ std::size_t jsonio::json::read_octet_data(std::istream &is,
           is.readsome(reinterpret_cast<char *>(get_binary().data() + pre_size),
                       size - pre_size);
       get_binary().resize(pre_size + read_size);
-      if (get_binary().size() == size) {
+      if (read_size == 0) {
+        is.setstate(std::ios::iostate::_S_eofbit);
+      } else if (get_binary().size() == size) {
         buffer_.clear();
         flags_ &= ~PHASE_COMPLETED;
         flags_ |= PHASE_DELIMITER;
