@@ -773,7 +773,7 @@ void jsonio::json::write(std::ostream &os, bool separate, int indents,
   if (completed()) {
     switch (type()) {
     case JsonType::J_NULL:
-      if (flags & Format_Options::prettify) {
+      if (flags & formatter::Format_Options::prettify_) {
         if (separate) {
           os << " ";
         }
@@ -781,7 +781,7 @@ void jsonio::json::write(std::ostream &os, bool separate, int indents,
       os << null_;
       break;
     case JsonType::J_STRING:
-      if (flags & Format_Options::prettify) {
+      if (flags & formatter::Format_Options::prettify_) {
         if (separate) {
           os << " ";
         }
@@ -791,7 +791,7 @@ void jsonio::json::write(std::ostream &os, bool separate, int indents,
       os << '\"';
       break;
     case JsonType::J_LONG:
-      if (flags & Format_Options::prettify) {
+      if (flags & formatter::Format_Options::prettify_) {
         if (separate) {
           os << " ";
         }
@@ -799,7 +799,7 @@ void jsonio::json::write(std::ostream &os, bool separate, int indents,
       os << get_long();
       break;
     case JsonType::J_DOUBLE:
-      if (flags & Format_Options::prettify) {
+      if (flags & formatter::Format_Options::prettify_) {
         if (separate) {
           os << " ";
         }
@@ -808,7 +808,7 @@ void jsonio::json::write(std::ostream &os, bool separate, int indents,
          << get_double();
       break;
     case JsonType::J_BOOL:
-      if (flags & Format_Options::prettify) {
+      if (flags & formatter::Format_Options::prettify_) {
         if (separate) {
           os << " ";
         }
@@ -816,12 +816,12 @@ void jsonio::json::write(std::ostream &os, bool separate, int indents,
       os << (get_bool() ? true_ : false_);
       break;
     case JsonType::J_BINARY:
-      if (flags & Format_Options::prettify) {
+      if (flags & formatter::Format_Options::prettify_) {
         if (separate) {
           os << " ";
         }
       }
-      if ((flags & Format_Options::bytes_as_binary)) {
+      if ((flags & formatter::Format_Options::bytes_as_binary_)) {
         os << octet_ << get_binary().size() << ';';
         os.write(reinterpret_cast<const char *>(get_binary().data()),
                  get_binary().size());
@@ -851,9 +851,9 @@ void jsonio::json::write(std::ostream &os, bool separate, int indents,
       }
       break;
     case JsonType::J_ARRAY:
-      if (flags & Format_Options::prettify) {
+      if (flags & formatter::Format_Options::prettify_) {
         if (separate) {
-          if (flags & Format_Options::new_line_bracket) {
+          if (flags & formatter::Format_Options::new_line_bracket_) {
             os << "\n";
           } else {
             os << " ";
@@ -863,9 +863,9 @@ void jsonio::json::write(std::ostream &os, bool separate, int indents,
       std::get<json_arr>(**this).write(os, indents, flags);
       break;
     case JsonType::J_OBJECT:
-      if (flags & Format_Options::prettify) {
+      if (flags & formatter::Format_Options::prettify_) {
         if (separate) {
-          if (flags & Format_Options::new_line_bracket) {
+          if (flags & formatter::Format_Options::new_line_bracket_) {
             os << "\n";
           } else {
             os << " ";

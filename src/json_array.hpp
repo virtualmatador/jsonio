@@ -128,7 +128,7 @@ public:
 
   const void write(std::ostream &os, int indents, unsigned int flags) const {
     if (completed()) {
-      if (flags & json::Format_Options::prettify) {
+      if (flags & json::formatter::Format_Options::prettify_) {
         for (int i = 0; i < indents; ++i) {
           os << '\t';
         }
@@ -142,7 +142,7 @@ public:
           } else {
             comma = true;
           }
-          if (flags & json::Format_Options::prettify) {
+          if (flags & json::formatter::Format_Options::prettify_) {
             os << '\n';
             for (int i = 0; i < indents + 1; ++i) {
               os << '\t';
@@ -151,7 +151,7 @@ public:
           sub_JsonValue.write(os, false, indents + 1);
         }
       }
-      if (flags & json::Format_Options::prettify) {
+      if (flags & json::formatter::Format_Options::prettify_) {
         os << '\n';
         for (int i = 0; i < indents; ++i) {
           os << '\t';

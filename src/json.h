@@ -41,14 +41,6 @@ private:
   unsigned int flags_;
   std::string buffer_;
 
-  enum Format_Options : unsigned int {
-    prettify = 0x0001,
-    new_line_bracket = 0x0002,
-    sort_asc = 0x0004,
-    sort_desc = 0x0008,
-    bytes_as_binary = 0x0010,
-  };
-
   inline static const std::string_view null_{"null"};
   inline static const std::string_view true_{"true"};
   inline static const std::string_view false_{"false"};
@@ -70,24 +62,33 @@ public:
     void write(std::ostream &os) const { object_.write(os, false, 0, flags_); }
 
   public:
+    enum Format_Options : unsigned int {
+      prettify_ = 0x0001,
+      new_line_bracket_ = 0x0002,
+      sort_asc_ = 0x0004,
+      sort_desc_ = 0x0008,
+      bytes_as_binary_ = 0x0010,
+    };
+
+  public:
     formatter &prettify() {
-      flags_ |= Format_Options::prettify;
+      flags_ |= Format_Options::prettify_;
       return *this;
     }
 
     formatter &new_line_bracket() {
-      flags_ |= Format_Options::new_line_bracket;
+      flags_ |= Format_Options::new_line_bracket_;
       return *this;
     }
 
     formatter &sort(bool asc = true) {
-      flags_ &= ~(Format_Options::sort_asc | Format_Options::sort_desc);
-      flags_ |= asc ? Format_Options::sort_asc : Format_Options::sort_desc;
+      flags_ &= ~(Format_Options::sort_asc_ | Format_Options::sort_desc_);
+      flags_ |= asc ? Format_Options::sort_asc_ : Format_Options::sort_desc_;
       return *this;
     }
 
     formatter &bytes_as_binary() {
-      flags_ |= Format_Options::bytes_as_binary;
+      flags_ |= Format_Options::bytes_as_binary_;
       return *this;
     }
 
