@@ -75,7 +75,7 @@ jsonio::json &jsonio::json::operator=(jsonio::json &&source) noexcept {
     flags_ = source.flags_;
     source.flags_ = PHASE_START;
     buffer_ = std::move(source.buffer_);
-    source.buffer_.clear();
+    source.buffer_ = {};
   }
   return *this;
 }
@@ -423,7 +423,6 @@ std::size_t jsonio::json::read(std::istream &is,
     char source;
     while (is >> source) {
       if (!isspace(source)) {
-        buffer_.clear();
         if (source == ']') {
           if (auto delimiter = delimiters.find(source);
               delimiter != std::string::npos) {
@@ -611,7 +610,6 @@ std::size_t jsonio::json::read_base64_data(std::istream &is,
                   reinterpret_cast<const char(&)[4]>(*buffer_.data()), dest);
               std::copy(dest, dest + 2,
                         std::back_insert_iterator(get_binary()));
-              buffer_.clear();
             } else {
               buffer_[2] = buffer_[3] = 'A';
               std::byte dest[3];
@@ -619,8 +617,8 @@ std::size_t jsonio::json::read_base64_data(std::istream &is,
                   reinterpret_cast<const char(&)[4]>(*buffer_.data()), dest);
               std::copy(dest, dest + 1,
                         std::back_insert_iterator(get_binary()));
-              buffer_.clear();
             }
+            buffer_.clear();
             flags_ &= ~PHASE_COMPLETED;
             flags_ |= PHASE_DELIMITER;
             return read_delimiter(is, delimiters);
@@ -672,6 +670,7 @@ std::size_t jsonio::json::read_octet_data(std::istream &is,
                       size - pre_size);
       get_binary().resize(pre_size + read_size);
       if (get_binary().size() == size) {
+        buffer_.clear();
         flags_ &= ~PHASE_COMPLETED;
         flags_ |= PHASE_DELIMITER;
         return read_delimiter(is, delimiters);
@@ -706,11 +705,11 @@ std::size_t jsonio::json::read_int(std::istream &is,
     char *end_ptr;
     PARENT_TYPE::operator=(strtol(buffer_.c_str(), &end_ptr, 0));
     if (*end_ptr == '\0') {
+      buffer_.clear();
       flags_ |= PHASE_COMPLETED;
     } else {
       is.setstate(std::ios::iostate::_S_badbit);
     }
-    buffer_.clear();
   }
   return delimiter;
 }
@@ -733,11 +732,11 @@ std::size_t jsonio::json::read_float(std::istream &is,
     char *end_ptr;
     PARENT_TYPE::operator=(strtod(buffer_.c_str(), &end_ptr));
     if (*end_ptr == '\0') {
+      buffer_.clear();
       flags_ |= PHASE_COMPLETED;
     } else {
       is.setstate(std::ios::iostate::_S_badbit);
     }
-    buffer_.clear();
   }
   return delimiter;
 }
@@ -745,7 +744,6 @@ std::size_t jsonio::json::read_float(std::istream &is,
 std::size_t jsonio::json::read_delimiter(std::istream &is,
                                          const std::string &delimiters) {
   auto delimiter = std::string::npos;
-  buffer_.clear();
   if (delimiters == "\n") {
     flags_ |= PHASE_COMPLETED;
   } else {
