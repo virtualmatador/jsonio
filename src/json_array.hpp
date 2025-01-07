@@ -88,22 +88,22 @@ public:
       } else {
         char source;
         while (is >> source) {
-          if (!isspace(source)) {
-            if (source == '[') {
-              flags_ &= ~PHASE_COMPLETED;
-              flags_ |= PHASE_VALUE;
-            } else {
-              is.setstate(std::ios::iostate::_S_badbit);
-            }
-            break;
+          if (std::isspace(source)) {
+            continue;
+          } else if (source == '[') {
+            flags_ &= ~PHASE_COMPLETED;
+            flags_ |= PHASE_VALUE;
+          } else {
+            is.setstate(std::ios::iostate::_S_badbit);
           }
+          break;
         }
       }
     }
     if ((flags_ & PHASE_COMPLETED) == PHASE_VALUE) {
       const std::string delimiters = ",]";
       for (;;) {
-        size_t delimiter = value_->read(is, delimiters);
+        auto delimiter = value_->read(is, delimiters);
         if (is.good()) {
           if ((value_->flags_ & json::EMPTY_VALUE) != json::EMPTY_VALUE) {
             PARENT_TYPE::push_back(std::move(*value_));

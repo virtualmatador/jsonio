@@ -135,16 +135,15 @@ public:
       } else {
         char source;
         while (is >> source) {
-          if (!isspace(source)) {
-            if (source == '{') {
-              flags_ &= ~PHASE_COMPLETED;
-              flags_ |= PHASE_KEY_START;
-            } else {
-              flags_ = PHASE_START;
-              is.setstate(std::ios::iostate::_S_badbit);
-            }
-            break;
+          if (std::isspace(source)) {
+            continue;
+          } else if (source == '{') {
+            flags_ &= ~PHASE_COMPLETED;
+            flags_ |= PHASE_KEY_START;
+          } else {
+            is.setstate(std::ios::iostate::_S_badbit);
           }
+          break;
         }
       }
     }
@@ -152,7 +151,9 @@ public:
       key_.flags_ = json_string::PHASE_START;
       char source;
       while (is >> source) {
-        if (source == '\"') {
+        if (std::isspace(source)) {
+          continue;
+        } else if (source == '\"') {
           flags_ &= ~PHASE_COMPLETED;
           flags_ |= PHASE_KEY_TEXT;
           break;
@@ -160,15 +161,13 @@ public:
           if (PARENT_TYPE::size() == 0) {
             flags_ |= PHASE_COMPLETED;
           } else {
-            flags_ = PHASE_START;
             is.setstate(std::ios::iostate::_S_badbit);
           }
           break;
-        } else if (!std::isspace(source)) {
-          flags_ = PHASE_START;
+        } else {
           is.setstate(std::ios::iostate::_S_badbit);
-          break;
         }
+        break;
       }
     }
     if ((flags_ & PHASE_COMPLETED) == PHASE_KEY_TEXT) {
@@ -181,15 +180,15 @@ public:
     if ((flags_ & PHASE_COMPLETED) == PHASE_COLON) {
       char source;
       while (is >> source) {
-        if (!std::isspace(source)) {
-          if (source == ':') {
-            flags_ &= ~PHASE_COMPLETED;
-            flags_ |= PHASE_VALUE;
-          } else {
-            is.setstate(std::ios::iostate::_S_badbit);
-          }
-          break;
+        if (std::isspace(source)) {
+          continue;
+        } else if (source == ':') {
+          flags_ &= ~PHASE_COMPLETED;
+          flags_ |= PHASE_VALUE;
+        } else {
+          is.setstate(std::ios::iostate::_S_badbit);
         }
+        break;
       }
     }
     if ((flags_ & PHASE_COMPLETED) == PHASE_VALUE) {

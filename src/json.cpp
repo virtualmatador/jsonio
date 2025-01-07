@@ -422,58 +422,58 @@ std::size_t jsonio::json::read(std::istream &is,
   if ((flags_ & PHASE_COMPLETED) == PHASE_START) {
     char source;
     while (is >> source) {
-      if (!isspace(source)) {
-        if (source == ']') {
-          if (auto delimiter = delimiters.find(source);
-              delimiter != std::string::npos) {
-            flags_ |= PHASE_COMPLETED;
-            flags_ |= EMPTY_VALUE;
-            return delimiter;
-          } else {
-            is.setstate(std::ios_base::iostate::_S_badbit);
-          }
-        } else if (source == '{') {
-          flags_ &= ~PHASE_COMPLETED;
-          flags_ |= PHASE_OBJECT;
-          PARENT_TYPE::operator=(json_obj{json_obj::SKIP_PREFIX});
-        } else if (source == '[') {
-          flags_ &= ~PHASE_COMPLETED;
-          flags_ |= PHASE_ARRAY;
-          PARENT_TYPE::operator=(json_arr{json_arr::SKIP_PREFIX});
-        } else if (source == '\"') {
-          flags_ &= ~PHASE_COMPLETED;
-          flags_ |= PHASE_STRING;
-          PARENT_TYPE::operator=(json_string{});
-        } else if (source == null_[0]) {
-          flags_ &= ~PHASE_COMPLETED;
-          flags_ |= PHASE_NULL;
-        } else if (source == true_[0]) {
-          flags_ &= ~PHASE_COMPLETED;
-          flags_ |= PHASE_TRUE;
-        } else if (source == false_[0]) {
-          flags_ &= ~PHASE_COMPLETED;
-          flags_ |= PHASE_FALSE;
-        } else if (source == octet_[0]) {
-          flags_ &= ~PHASE_COMPLETED;
-          flags_ |= PHASE_OCTET_LITERAL;
-        } else if (source == base64_[0]) {
-          flags_ &= ~PHASE_COMPLETED;
-          flags_ |= PHASE_BASE64_LITERAl;
-        } else if (source == '.') {
-          flags_ &= ~PHASE_COMPLETED;
-          flags_ |= PHASE_FLOAT;
-          buffer_.append(1, source);
-        } else if ((source >= '0' && source <= '9') || source == '+' ||
-                   source == '-') {
-          flags_ &= ~PHASE_COMPLETED;
-          flags_ |= PHASE_INT;
-          buffer_.append(1, source);
+      if (std::isspace(source)) {
+        continue;
+      } else if (source == ']') {
+        if (auto delimiter = delimiters.find(source);
+            delimiter != std::string::npos) {
+          flags_ |= PHASE_COMPLETED;
+          flags_ |= EMPTY_VALUE;
+          return delimiter;
         } else {
           is.setstate(std::ios_base::iostate::_S_badbit);
-          return std::string::npos;
         }
-        break;
+      } else if (source == '{') {
+        flags_ &= ~PHASE_COMPLETED;
+        flags_ |= PHASE_OBJECT;
+        PARENT_TYPE::operator=(json_obj{json_obj::SKIP_PREFIX});
+      } else if (source == '[') {
+        flags_ &= ~PHASE_COMPLETED;
+        flags_ |= PHASE_ARRAY;
+        PARENT_TYPE::operator=(json_arr{json_arr::SKIP_PREFIX});
+      } else if (source == '\"') {
+        flags_ &= ~PHASE_COMPLETED;
+        flags_ |= PHASE_STRING;
+        PARENT_TYPE::operator=(json_string{});
+      } else if (source == null_[0]) {
+        flags_ &= ~PHASE_COMPLETED;
+        flags_ |= PHASE_NULL;
+      } else if (source == true_[0]) {
+        flags_ &= ~PHASE_COMPLETED;
+        flags_ |= PHASE_TRUE;
+      } else if (source == false_[0]) {
+        flags_ &= ~PHASE_COMPLETED;
+        flags_ |= PHASE_FALSE;
+      } else if (source == octet_[0]) {
+        flags_ &= ~PHASE_COMPLETED;
+        flags_ |= PHASE_OCTET_LITERAL;
+      } else if (source == base64_[0]) {
+        flags_ &= ~PHASE_COMPLETED;
+        flags_ |= PHASE_BASE64_LITERAl;
+      } else if (source == '.') {
+        flags_ &= ~PHASE_COMPLETED;
+        flags_ |= PHASE_FLOAT;
+        buffer_.append(1, source);
+      } else if ((source >= '0' && source <= '9') || source == '+' ||
+                 source == '-') {
+        flags_ &= ~PHASE_COMPLETED;
+        flags_ |= PHASE_INT;
+        buffer_.append(1, source);
+      } else {
+        is.setstate(std::ios_base::iostate::_S_badbit);
+        return std::string::npos;
       }
+      break;
     }
   }
   switch (flags_ & PHASE_COMPLETED) {
@@ -587,70 +587,68 @@ void jsonio::json::read_literal(std::istream &is, std::string_view literal) {
 
 std::size_t jsonio::json::read_base64_data(std::istream &is,
                                            const std::string &delimiters) {
-  auto delimiter = std::string::npos;
   char source;
   while (is >> source) {
-    if (!std::isspace(source)) {
-      delimiter = delimiters.find(source);
-      if (delimiter == std::string::npos) {
-        buffer_.append(1, source);
-        if (buffer_.size() == 4) {
-          if (buffer_[3] != '=') {
-            get_binary().resize(get_binary().size() + 3);
-            b64_decode_chunk(
-                reinterpret_cast<const char(&)[4]>(*buffer_.data()),
-                reinterpret_cast<std::byte(&)[3]>(
-                    get_binary().at(get_binary().size() - 3)));
-            buffer_.clear();
-          } else {
-            if (buffer_[2] != '=') {
-              buffer_[3] = 'A';
-              std::byte dest[3];
-              b64_decode_chunk(
-                  reinterpret_cast<const char(&)[4]>(*buffer_.data()), dest);
-              std::copy(dest, dest + 2,
-                        std::back_insert_iterator(get_binary()));
-            } else {
-              buffer_[2] = buffer_[3] = 'A';
-              std::byte dest[3];
-              b64_decode_chunk(
-                  reinterpret_cast<const char(&)[4]>(*buffer_.data()), dest);
-              std::copy(dest, dest + 1,
-                        std::back_insert_iterator(get_binary()));
-            }
-            buffer_.clear();
-            flags_ &= ~PHASE_COMPLETED;
-            flags_ |= PHASE_DELIMITER;
-            return read_delimiter(is, delimiters);
-          }
-        }
+    if (std::isspace(source)) {
+      continue;
+    } else if (auto delimiter = delimiters.find(source);
+               delimiter != std::string::npos) {
+      if (buffer_.size() == 0) {
+        flags_ |= PHASE_COMPLETED;
       } else {
-        break;
+        is.setstate(std::ios::iostate::_S_badbit);
+      }
+      return delimiter;
+    } else if (buffer_.append(1, source); buffer_.size() == 4) {
+      if (buffer_[3] != '=') {
+        get_binary().resize(get_binary().size() + 3);
+        b64_decode_chunk(reinterpret_cast<const char(&)[4]>(*buffer_.data()),
+                         reinterpret_cast<std::byte(&)[3]>(
+                             get_binary().at(get_binary().size() - 3)));
+        buffer_.clear();
+      } else {
+        if (buffer_[2] != '=') {
+          buffer_[3] = 'A';
+          std::byte dest[3];
+          b64_decode_chunk(reinterpret_cast<const char(&)[4]>(*buffer_.data()),
+                           dest);
+          std::copy(dest, dest + 2, std::back_insert_iterator(get_binary()));
+        } else {
+          buffer_[2] = buffer_[3] = 'A';
+          std::byte dest[3];
+          b64_decode_chunk(reinterpret_cast<const char(&)[4]>(*buffer_.data()),
+                           dest);
+          std::copy(dest, dest + 1, std::back_insert_iterator(get_binary()));
+        }
+        buffer_.clear();
+        flags_ &= ~PHASE_COMPLETED;
+        flags_ |= PHASE_DELIMITER;
+        return read_delimiter(is, delimiters);
       }
     }
   }
-  if (is.good() || delimiters == "\n") {
+  if (delimiters == "\n") {
     if (buffer_.size() == 0) {
       flags_ |= PHASE_COMPLETED;
     } else {
       is.setstate(std::ios::iostate::_S_badbit);
     }
   }
-  return delimiter;
+  return std::string::npos;
 }
 
 std::size_t jsonio::json::read_octet_size(std::istream &is,
                                           const std::string &delimiters) {
   char source;
   while (is >> source) {
-    if (!isspace(source)) {
-      if (source != ';') {
-        buffer_.append(1, source);
-      } else {
-        flags_ &= ~PHASE_COMPLETED;
-        flags_ |= PHASE_OCTET_DATA;
-        return read_octet_data(is, delimiters);
-      }
+    if (std::isspace(source)) {
+      continue;
+    } else if (source == ';') {
+      flags_ &= ~PHASE_COMPLETED;
+      flags_ |= PHASE_OCTET_DATA;
+      return read_octet_data(is, delimiters);
+    } else {
+      buffer_.append(1, source);
     }
   }
   return std::string::npos;
@@ -686,82 +684,88 @@ std::size_t jsonio::json::read_octet_data(std::istream &is,
 
 std::size_t jsonio::json::read_int(std::istream &is,
                                    const std::string &delimiters) {
-  auto delimiter = std::string::npos;
   char source;
   while (is >> source) {
-    if (!isspace(source)) {
-      delimiter = delimiters.find(source);
-      if (delimiter == std::string::npos) {
-        buffer_.append(1, source);
-        if (source == '.') {
-          flags_ &= ~PHASE_COMPLETED;
-          flags_ |= PHASE_FLOAT;
-          return read_float(is, delimiters);
-        }
-      } else {
-        break;
-      }
+    if (std::isspace(source)) {
+      continue;
+    } else if (auto delimiter = delimiters.find(source);
+               delimiter != std::string::npos) {
+      convert_int(is);
+      return delimiter;
+    } else if (buffer_.append(1, source); buffer_.back() == '.') {
+      flags_ &= ~PHASE_COMPLETED;
+      flags_ |= PHASE_FLOAT;
+      return read_float(is, delimiters);
     }
   }
-  if (is.good() || delimiters == "\n") {
-    char *end_ptr;
-    PARENT_TYPE::operator=(strtol(buffer_.c_str(), &end_ptr, 0));
-    if (*end_ptr == '\0') {
-      buffer_.clear();
-      flags_ |= PHASE_COMPLETED;
-    } else {
-      is.setstate(std::ios::iostate::_S_badbit);
-    }
+  if (delimiters == "\n") {
+    convert_int(is);
   }
-  return delimiter;
+  return std::string::npos;
 }
 
 std::size_t jsonio::json::read_float(std::istream &is,
                                      const std::string &delimiters) {
-  auto delimiter = std::string::npos;
   char source;
   while (is >> source) {
-    if (!isspace(source)) {
-      delimiter = delimiters.find(source);
-      if (delimiter == std::string::npos) {
-        buffer_.append(1, source);
-      } else {
-        break;
-      }
-    }
-  }
-  if (is.good() || delimiters == "\n") {
-    char *end_ptr;
-    PARENT_TYPE::operator=(strtod(buffer_.c_str(), &end_ptr));
-    if (*end_ptr == '\0') {
-      buffer_.clear();
-      flags_ |= PHASE_COMPLETED;
+    if (std::isspace(source)) {
+      continue;
+    } else if (auto delimiter = delimiters.find(source);
+               delimiter != std::string::npos) {
+      convert_float(is);
+      return delimiter;
     } else {
-      is.setstate(std::ios::iostate::_S_badbit);
+      buffer_.append(1, source);
     }
   }
-  return delimiter;
+  if (delimiters == "\n") {
+    convert_float(is);
+  }
+  return std::string::npos;
 }
 
 std::size_t jsonio::json::read_delimiter(std::istream &is,
                                          const std::string &delimiters) {
-  auto delimiter = std::string::npos;
   if (delimiters == "\n") {
     flags_ |= PHASE_COMPLETED;
   } else {
     char source;
     while (is >> source) {
-      delimiter = delimiters.find(source);
-      if (delimiter != std::string::npos) {
+      if (std::isspace(source)) {
+        continue;
+      } else if (auto delimiter = delimiters.find(source);
+                 delimiter != std::string::npos) {
         flags_ |= PHASE_COMPLETED;
-        break;
-      } else if (!isspace(source)) {
+        return delimiter;
+      } else {
         is.setstate(std::ios::iostate::_S_badbit);
         break;
       }
     }
   }
-  return delimiter;
+  return std::string::npos;
+}
+
+void jsonio::json::convert_int(std::istream &is) {
+  char *end_ptr;
+  PARENT_TYPE::operator=(strtol(buffer_.c_str(), &end_ptr, 0));
+  if (*end_ptr == '\0') {
+    buffer_.clear();
+    flags_ |= PHASE_COMPLETED;
+  } else {
+    is.setstate(std::ios::iostate::_S_badbit);
+  }
+}
+
+void jsonio::json::convert_float(std::istream &is) {
+  char *end_ptr;
+  PARENT_TYPE::operator=(strtod(buffer_.c_str(), &end_ptr));
+  if (*end_ptr == '\0') {
+    buffer_.clear();
+    flags_ |= PHASE_COMPLETED;
+  } else {
+    is.setstate(std::ios::iostate::_S_badbit);
+  }
 }
 
 void jsonio::json::write(std::ostream &os, bool separate, int indents,

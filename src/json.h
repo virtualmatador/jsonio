@@ -132,6 +132,8 @@ private:
   std::size_t read_int(std::istream &is, const std::string &delimiters);
   std::size_t read_float(std::istream &is, const std::string &delimiters);
   std::size_t read_delimiter(std::istream &is, const std::string &delimiters);
+  void convert_int(std::istream &is);
+  void convert_float(std::istream &is);
   void write(std::ostream &os, bool separate, int indents,
              unsigned int flags = 0) const;
   void b64_encode_chunk(const std::byte (&source)[3], char (&dest)[4]) const;
