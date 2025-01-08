@@ -8,7 +8,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "json_string.h"
+#include "json_string.hpp"
 
 namespace jsonio {
 

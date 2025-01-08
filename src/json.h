@@ -7,9 +7,10 @@
 #include <string_view>
 #include <variant>
 
+#include "json_string.hpp"
+
 #include "json_array.hpp"
 #include "json_object.hpp"
-#include "json_string.h"
 
 namespace jsonio {
 
@@ -20,6 +21,7 @@ enum class JsonType : std::size_t {
   J_DOUBLE,
   J_BOOL,
   J_BINARY,
+  J_STREAM,
   J_ARRAY,
   J_OBJECT,
 };
@@ -31,7 +33,7 @@ using json_arr = json_array<json>;
 
 using PARENT_TYPE =
     std::variant<std::monostate, json_string, long, double, bool,
-                 std::vector<std::byte>, json_arr, json_obj>;
+                 std::vector<std::byte>, std::istream *, json_arr, json_obj>;
 
 class json : public PARENT_TYPE {
 private:
