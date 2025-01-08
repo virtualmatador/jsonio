@@ -478,7 +478,7 @@ std::size_t jsonio::json::read(std::istream &is,
   }
   switch (flags_ & PHASE_COMPLETED) {
   case PHASE_OBJECT:
-    std::get<json_obj>(**this).read(is);
+    std::get<json_obj>(*this).read(is);
     if (is.good()) {
       flags_ &= ~PHASE_COMPLETED;
       flags_ |= PHASE_DELIMITER;
@@ -486,7 +486,7 @@ std::size_t jsonio::json::read(std::istream &is,
     }
     break;
   case PHASE_ARRAY:
-    std::get<json_arr>(**this).read(is);
+    std::get<json_arr>(*this).read(is);
     if (is.good()) {
       flags_ &= ~PHASE_COMPLETED;
       flags_ |= PHASE_DELIMITER;
@@ -494,7 +494,7 @@ std::size_t jsonio::json::read(std::istream &is,
     }
     break;
   case PHASE_STRING:
-    std::get<json_string>(**this).read(is);
+    std::get<json_string>(*this).read(is);
     if (is.good()) {
       flags_ &= ~PHASE_COMPLETED;
       flags_ |= PHASE_DELIMITER;
@@ -787,7 +787,7 @@ void jsonio::json::write(std::ostream &os, bool separate, int indents,
         }
       }
       os << '\"';
-      std::get<json_string>(**this).write(os);
+      std::get<json_string>(*this).write(os);
       os << '\"';
       break;
     case JsonType::J_LONG:
@@ -860,7 +860,7 @@ void jsonio::json::write(std::ostream &os, bool separate, int indents,
           }
         }
       }
-      std::get<json_arr>(**this).write(os, indents, flags);
+      std::get<json_arr>(*this).write(os, indents, flags);
       break;
     case JsonType::J_OBJECT:
       if (flags & formatter::Format_Options::prettify_) {
@@ -872,7 +872,7 @@ void jsonio::json::write(std::ostream &os, bool separate, int indents,
           }
         }
       }
-      std::get<json_obj>(**this).write(os, indents, flags);
+      std::get<json_obj>(*this).write(os, indents, flags);
       break;
     }
   }
@@ -899,45 +899,42 @@ void jsonio::json::b64_decode_chunk(const char (&source)[4],
 }
 
 jsonio::JsonType jsonio::json::type() const {
-  if (!has_value()) {
-    return JsonType::J_NULL;
-  }
-  return static_cast<JsonType>((*this)->index());
+  return static_cast<JsonType>(this->index());
 }
 
 jsonio::json &jsonio::json::operator[](std::size_t index) {
-  return std::get<json_arr>(**this).operator[](index);
+  return std::get<json_arr>(*this).operator[](index);
 }
 
 const jsonio::json &jsonio::json::operator[](std::size_t index) const {
-  return std::get<json_arr>(**this).operator[](index);
+  return std::get<json_arr>(*this).operator[](index);
 }
 
 jsonio::json *jsonio::json::at(std::size_t index) {
-  return std::get<json_arr>(**this).at(index);
+  return std::get<json_arr>(*this).at(index);
 }
 
 const jsonio::json *jsonio::json::at(std::size_t index) const {
-  return std::get<json_arr>(**this).at(index);
+  return std::get<json_arr>(*this).at(index);
 }
 
 jsonio::json &jsonio::json::operator[](const std::string &key) {
-  return std::get<json_obj>(**this).operator[](key);
+  return std::get<json_obj>(*this).operator[](key);
 }
 
 const jsonio::json &jsonio::json::operator[](const std::string &key) const {
-  return std::get<json_obj>(**this).operator[](key);
+  return std::get<json_obj>(*this).operator[](key);
 }
 
 jsonio::json *jsonio::json::at(const std::string &key) {
-  return std::get<json_obj>(**this).at(key);
+  return std::get<json_obj>(*this).at(key);
 }
 
 const jsonio::json *jsonio::json::at(const std::string &key) const {
-  return std::get<json_obj>(**this).at(key);
+  return std::get<json_obj>(*this).at(key);
 }
 
-bool jsonio::json::is_null() { return !has_value(); }
+bool jsonio::json::is_null() { return type() == JsonType::J_NULL; }
 
 std::string &jsonio::json::get_string() {
   return const_cast<std::string &>(
@@ -945,28 +942,28 @@ std::string &jsonio::json::get_string() {
 }
 
 const std::string &jsonio::json::get_string() const {
-  return std::get<json_string>(**this);
+  return std::get<json_string>(*this);
 }
 
 long &jsonio::json::get_long() {
   return const_cast<long &>(static_cast<const json &>(*this).get_long());
 }
 
-const long &jsonio::json::get_long() const { return std::get<long>(**this); }
+const long &jsonio::json::get_long() const { return std::get<long>(*this); }
 
 double &jsonio::json::get_double() {
   return const_cast<double &>(static_cast<const json &>(*this).get_double());
 }
 
 const double &jsonio::json::get_double() const {
-  return std::get<double>(**this);
+  return std::get<double>(*this);
 }
 
 bool &jsonio::json::get_bool() {
   return const_cast<bool &>(static_cast<const json &>(*this).get_bool());
 }
 
-const bool &jsonio::json::get_bool() const { return std::get<bool>(**this); }
+const bool &jsonio::json::get_bool() const { return std::get<bool>(*this); }
 
 std::vector<std::byte> &jsonio::json::get_binary() {
   return const_cast<std::vector<std::byte> &>(
@@ -974,7 +971,7 @@ std::vector<std::byte> &jsonio::json::get_binary() {
 }
 
 const std::vector<std::byte> &jsonio::json::get_binary() const {
-  return std::get<std::vector<std::byte>>(**this);
+  return std::get<std::vector<std::byte>>(*this);
 }
 
 jsonio::json_arr &jsonio::json::get_array() {
@@ -982,7 +979,7 @@ jsonio::json_arr &jsonio::json::get_array() {
 }
 
 const jsonio::json_arr &jsonio::json::get_array() const {
-  return std::get<json_arr>(**this);
+  return std::get<json_arr>(*this);
 }
 
 jsonio::json_obj &jsonio::json::get_object() {
@@ -991,19 +988,19 @@ jsonio::json_obj &jsonio::json::get_object() {
 }
 
 const jsonio::json_obj &jsonio::json::get_object() const {
-  return std::get<json_obj>(**this);
+  return std::get<json_obj>(*this);
 }
 
 int jsonio::json::get_int() const {
-  return static_cast<int>(std::get<long>(**this));
+  return static_cast<int>(std::get<long>(*this));
 }
 
 int jsonio::json::get_uint() const {
-  return static_cast<unsigned int>(std::get<long>(**this));
+  return static_cast<unsigned int>(std::get<long>(*this));
 }
 
 float jsonio::json::get_float() const {
-  return static_cast<float>(std::get<double>(**this));
+  return static_cast<float>(std::get<double>(*this));
 }
 
 jsonio::json::formatter jsonio::json::format() const {

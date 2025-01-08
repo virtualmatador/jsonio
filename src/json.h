@@ -3,7 +3,6 @@
 
 #include <iostream>
 #include <memory>
-#include <optional>
 #include <string>
 #include <string_view>
 #include <variant>
@@ -15,6 +14,7 @@
 namespace jsonio {
 
 enum class JsonType : std::size_t {
+  J_NULL,
   J_STRING,
   J_LONG,
   J_DOUBLE,
@@ -22,13 +22,12 @@ enum class JsonType : std::size_t {
   J_BINARY,
   J_ARRAY,
   J_OBJECT,
-  J_NULL,
 };
 
 template <class json>
-using VARIANT_TYPE = std::optional<
-    std::variant<json_string, long, double, bool, std::vector<std::byte>,
-                 json_array<json>, json_object<json>>>;
+using VARIANT_TYPE =
+    std::variant<std::monostate, json_string, long, double, bool,
+                 std::vector<std::byte>, json_array<json>, json_object<json>>;
 
 class json;
 
