@@ -148,7 +148,6 @@ public:
       }
     }
     if ((flags_ & PHASE_COMPLETED) == PHASE_KEY_START) {
-      key_.flags_ = json_string::PHASE_START;
       char source;
       while (is >> source) {
         if (std::isspace(source)) {
@@ -210,6 +209,8 @@ public:
         }
         if (append) {
           PARENT_TYPE::insert({std::move(key_), std::move(*value_)});
+          key_ = json_string{};
+          *value_ = json{};
         }
         if (read_again) {
           read(is);
@@ -280,26 +281,7 @@ private:
     os << '\"' << pair.first << "\":";
     pair.second.write(os, true, indents + 1, flags);
   }
-
-public:
-  template <class>
-  friend std::istream &operator>>(std::istream &is, json_object<json> &target);
-  template <class>
-  friend std::ostream &operator<<(std::ostream &os,
-                                  const json_object<json> &source);
 };
-
-template <class json>
-std::istream &operator>>(std::istream &is, json_object<json> &target) {
-  target.read(is);
-  return is;
-}
-
-template <class json>
-std::ostream &operator<<(std::ostream &os, const json_object<json> &source) {
-  source.write(os, 0, 0);
-  return os;
-}
 
 } // namespace jsonio
 

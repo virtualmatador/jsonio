@@ -24,19 +24,17 @@ enum class JsonType : std::size_t {
   J_OBJECT,
 };
 
-template <class json>
-using VARIANT_TYPE =
-    std::variant<std::monostate, json_string, long, double, bool,
-                 std::vector<std::byte>, json_array<json>, json_object<json>>;
-
 class json;
 
 using json_obj = json_object<json>;
 using json_arr = json_array<json>;
 
-class json : public VARIANT_TYPE<json> {
+using PARENT_TYPE =
+    std::variant<std::monostate, json_string, long, double, bool,
+                 std::vector<std::byte>, json_arr, json_obj>;
+
+class json : public PARENT_TYPE {
 private:
-  using PARENT_TYPE = VARIANT_TYPE<json>;
   unsigned int flags_;
   std::string buffer_;
 

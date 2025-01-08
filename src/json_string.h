@@ -37,20 +37,16 @@ public:
   json_string &operator=(json_string &&source) noexcept;
   ~json_string() noexcept;
 
+  void read(std::istream &is);
+  void write(std::ostream &os) const;
   bool completed() const;
 
 private:
   void check_escape();
-  void read(std::istream &is);
-  void write(std::ostream &os) const;
 
 private:
   static char Unescape(const char source);
   static char Escape(const char source);
-
-public:
-  template <class> friend class json_object;
-  friend class json;
 };
 
 } // namespace jsonio

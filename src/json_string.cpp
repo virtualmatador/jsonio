@@ -76,19 +76,6 @@ jsonio::json_string::operator=(std::string_view text) noexcept {
 
 jsonio::json_string::~json_string() noexcept {}
 
-bool jsonio::json_string::completed() const {
-  return (flags_ & PHASE_COMPLETED) == PHASE_COMPLETED;
-}
-
-void jsonio::json_string::check_escape() {
-  for (auto source : *(std::string *)this) {
-    if (Escape(source) != '\0') {
-      flags_ |= ESCAPED;
-      break;
-    }
-  }
-}
-
 void jsonio::json_string::read(std::istream &is) {
   if ((flags_ & PHASE_COMPLETED) == PHASE_COMPLETED) {
     flags_ = PHASE_START;
@@ -142,6 +129,19 @@ void jsonio::json_string::write(std::ostream &os) const {
       }
     } else {
       os << *((std::string *)this);
+    }
+  }
+}
+
+bool jsonio::json_string::completed() const {
+  return (flags_ & PHASE_COMPLETED) == PHASE_COMPLETED;
+}
+
+void jsonio::json_string::check_escape() {
+  for (auto source : *(std::string *)this) {
+    if (Escape(source) != '\0') {
+      flags_ |= ESCAPED;
+      break;
     }
   }
 }

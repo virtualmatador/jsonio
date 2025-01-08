@@ -160,26 +160,7 @@ public:
       os << "]";
     }
   }
-
-public:
-  template <class>
-  friend std::istream &operator>>(std::istream &is, json_array<json> &target);
-  template <class>
-  friend std::ostream &operator<<(std::ostream &os,
-                                  const json_array<json> &source);
 };
-
-template <class json>
-std::istream &operator>>(std::istream &is, json_array<json> &target) {
-  target.read(is);
-  return is;
-}
-
-template <class json>
-std::ostream &operator<<(std::ostream &os, const json_array<json> &source) {
-  source.write(os, 0, 0);
-  return os;
-}
 
 } // namespace jsonio
 
