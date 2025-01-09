@@ -49,14 +49,13 @@ public:
   json_object(const unsigned int flags) noexcept
       : flags_{flags}, value_{std::make_unique<json>()} {}
 
-  json_object(const json_object &source) noexcept
+  json_object(const json_object &that) noexcept
       : value_{std::make_unique<json>()} {
-    *this = source;
+    *this = that;
   }
 
-  json_object(json_object &&source) noexcept
-      : value_{std::make_unique<json>()} {
-    *this = std::move(source);
+  json_object(json_object &&that) noexcept : value_{std::make_unique<json>()} {
+    *this = std::move(that);
   }
 
   json_object &operator=(const json_object &source) noexcept {
@@ -79,8 +78,6 @@ public:
     }
     return *this;
   }
-
-  ~json_object() noexcept {}
 
   bool completed() const {
     return (flags_ & PHASE_COMPLETED) == PHASE_COMPLETED;

@@ -32,13 +32,13 @@ public:
   json_array(const unsigned int flags) noexcept
       : flags_{flags}, value_{std::make_unique<json>()} {}
 
-  json_array(const json_array &source) noexcept
+  json_array(const json_array &that) noexcept
       : value_{std::make_unique<json>()} {
-    *this = source;
+    *this = that;
   }
 
-  json_array(json_array &&source) noexcept : value_{std::make_unique<json>()} {
-    *this = std::move(source);
+  json_array(json_array &&that) noexcept : value_{std::make_unique<json>()} {
+    *this = std::move(that);
   }
 
   json_array &operator=(const json_array &source) noexcept {
@@ -59,8 +59,6 @@ public:
     }
     return *this;
   }
-
-  ~json_array() noexcept {}
 
   bool completed() const {
     return (flags_ & PHASE_COMPLETED) == PHASE_COMPLETED;

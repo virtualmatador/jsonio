@@ -71,6 +71,7 @@ public:
     }
     return *this;
   }
+
   json_string &operator=(json_string &&that) noexcept {
     if (this != &that) {
       std::string::operator=(std::move(*(std::string *)&that));
@@ -79,7 +80,6 @@ public:
     }
     return *this;
   }
-  ~json_string() noexcept {}
 
   void read(std::istream &is) {
     if ((flags_ & PHASE_COMPLETED) == PHASE_COMPLETED) {
