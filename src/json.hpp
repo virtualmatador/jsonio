@@ -101,7 +101,10 @@ public:
   public:
     friend json;
     friend std::ostream &operator<<(std::ostream &os,
-                                    const json::formatter &source);
+                                    const json::formatter &source) {
+      source.write(os);
+      return os;
+    }
   };
 
 private:
@@ -1078,24 +1081,17 @@ private:
 public:
   friend class json_array<json>;
   friend class json_object<json>;
-  friend std::istream &operator>>(std::istream &is, json &target);
-  friend std::ostream &operator<<(std::ostream &os, const json &source);
+
+  friend std::istream &operator>>(std::istream &is, json &target) {
+    target.read(is, "\n");
+    return is;
+  }
+
+  friend std::ostream &operator<<(std::ostream &os, const json &source) {
+    source.write(os, false, 0);
+    return os;
+  }
 };
-
-std::istream &operator>>(std::istream &is, json &target) {
-  target.read(is, "\n");
-  return is;
-}
-
-std::ostream &operator<<(std::ostream &os, const json &source) {
-  source.write(os, false, 0);
-  return os;
-}
-
-std::ostream &operator<<(std::ostream &os, const json::formatter &source) {
-  source.write(os);
-  return os;
-}
 
 } // namespace jsonio
 
