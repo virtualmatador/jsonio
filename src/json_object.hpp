@@ -168,7 +168,7 @@ public:
     }
     if ((flags_ & PHASE_COMPLETED) == PHASE_KEY_TEXT) {
       key_.read(is);
-      if (is.good()) {
+      if (key_.completed()) {
         flags_ &= ~PHASE_COMPLETED;
         flags_ |= PHASE_COLON;
       }
@@ -189,27 +189,16 @@ public:
     }
     if ((flags_ & PHASE_COMPLETED) == PHASE_VALUE) {
       const std::string delimiters = ",}";
-      std::size_t delimiter = value_->read(is, delimiters);
-      if (is.good()) {
-        bool read_again = false;
-        bool append = true;
-        if (delimiters[delimiter] == ',') {
-          read_again = true;
-          flags_ &= ~PHASE_COMPLETED;
-          flags_ |= PHASE_KEY_START;
-        } else if (delimiters[delimiter] == '}') {
+      if (auto delimiter = value_->read(is, delimiters);
+          delimiter != std::string::npos) {
+        PARENT_TYPE::insert({std::move(key_), std::move(*value_)});
+        key_ = json_string{};
+        *value_ = json{};
+        if (delimiters[delimiter] == '}') {
           flags_ |= PHASE_COMPLETED;
         } else {
-          append = false;
-          flags_ = PHASE_START;
-          is.setstate(std::ios::iostate::_S_badbit);
-        }
-        if (append) {
-          PARENT_TYPE::insert({std::move(key_), std::move(*value_)});
-          key_ = json_string{};
-          *value_ = json{};
-        }
-        if (read_again) {
+          flags_ &= ~PHASE_COMPLETED;
+          flags_ |= PHASE_KEY_START;
           read(is);
         }
       }

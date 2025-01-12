@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <iomanip>
 #include <iostream>
 #include <string>
@@ -45,8 +46,9 @@ private:
   inline static const std::string_view null_{"null"};
   inline static const std::string_view true_{"true"};
   inline static const std::string_view false_{"false"};
-  inline static const std::string_view octet_{"octet;"};
   inline static const std::string_view base64_{"base64;"};
+  inline static const std::string_view octet_{"octet;"};
+  inline static const std::string_view stream_{"stream;"};
   inline static const std::string_view base64_chars_{
       "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
       "abcdefghijklmnopqrstuvwxyz"
@@ -121,11 +123,14 @@ private:
     PHASE_OCTET_LITERAL = 0x0009,
     PHASE_OCTET_SIZE = 0x000A,
     PHASE_OCTET_DATA = 0x000B,
-    PHASE_INT = 0x000C,
-    PHASE_FLOAT = 0x000D,
-    PHASE_DELIMITER = 0x000E,
-    PHASE_COMPLETED = 0x000F,
-    EMPTY_VALUE = 0x0010,
+    PHASE_STREAM_LITERAL = 0x000C,
+    PHASE_STREAM_DIVIDER_SIZE = 0x000D,
+    PHASE_STREAM_DATA = 0x000E,
+    PHASE_INT = 0x000F,
+    PHASE_FLOAT = 0x0010,
+    PHASE_DELIMITER = 0x0011,
+    PHASE_COMPLETED = 0x00FF,
+    EMPTY_VALUE = 0x0100,
   };
 
 public:
@@ -158,6 +163,8 @@ public:
   json(std::vector<std::byte> &&binary_value) {
     *this = std::move(binary_value);
   }
+
+  json(std::istream *is) { *this = is; }
 
   json(const json_arr &json_array_value) { *this = json_array_value; }
 
@@ -249,6 +256,12 @@ public:
 
   json &operator=(std::vector<std::byte> &&binary_value) {
     PARENT_TYPE::operator=(std::move(binary_value));
+    flags_ = PHASE_COMPLETED;
+    return *this;
+  }
+
+  json &operator=(std::istream *is) {
+    PARENT_TYPE::operator=(is);
     flags_ = PHASE_COMPLETED;
     return *this;
   }
@@ -461,6 +474,20 @@ public:
         break;
       }
       break;
+    case JsonType::J_STREAM:
+      switch (source.type()) {
+      case JsonType::J_STREAM:
+        get_stream() = source.get_stream();
+        break;
+      case JsonType::J_ARRAY:
+        if (convert) {
+          if (source.get_array().size() == 1) {
+            steal(source.get_array()[0], convert);
+          }
+        }
+        break;
+      }
+      break;
     case JsonType::J_ARRAY:
       switch (source.type()) {
       case JsonType::J_NULL:
@@ -468,6 +495,8 @@ public:
       case JsonType::J_LONG:
       case JsonType::J_DOUBLE:
       case JsonType::J_BOOL:
+      case JsonType::J_BINARY:
+      case JsonType::J_STREAM:
       case JsonType::J_OBJECT:
         if (convert) {
           get_array().clear();
@@ -576,6 +605,15 @@ public:
     return std::get<std::vector<std::byte>>(*this);
   }
 
+  std::istream *&get_stream() {
+    return const_cast<std::istream *&>(
+        static_cast<const json &>(*this).get_stream());
+  }
+
+  std::istream *const &get_stream() const {
+    return std::get<std::istream *>(*this);
+  }
+
   json_arr &get_array() {
     return const_cast<json_arr &>(static_cast<const json &>(*this).get_array());
   }
@@ -611,15 +649,6 @@ private:
       while (is >> source) {
         if (std::isspace(source)) {
           continue;
-        } else if (source == ']') {
-          if (auto delimiter = delimiters.find(source);
-              delimiter != std::string::npos) {
-            flags_ |= PHASE_COMPLETED;
-            flags_ |= EMPTY_VALUE;
-            return delimiter;
-          } else {
-            is.setstate(std::ios_base::iostate::_S_badbit);
-          }
         } else if (source == '{') {
           flags_ &= ~PHASE_COMPLETED;
           flags_ |= PHASE_OBJECT;
@@ -641,12 +670,15 @@ private:
         } else if (source == false_[0]) {
           flags_ &= ~PHASE_COMPLETED;
           flags_ |= PHASE_FALSE;
-        } else if (source == octet_[0]) {
-          flags_ &= ~PHASE_COMPLETED;
-          flags_ |= PHASE_OCTET_LITERAL;
         } else if (source == base64_[0]) {
           flags_ &= ~PHASE_COMPLETED;
           flags_ |= PHASE_BASE64_LITERAl;
+        } else if (source == octet_[0]) {
+          flags_ &= ~PHASE_COMPLETED;
+          flags_ |= PHASE_OCTET_LITERAL;
+        } else if (source == stream_[0]) {
+          flags_ &= ~PHASE_COMPLETED;
+          flags_ |= PHASE_STREAM_LITERAL;
         } else if (source == '.') {
           flags_ &= ~PHASE_COMPLETED;
           flags_ |= PHASE_FLOAT;
@@ -656,8 +688,13 @@ private:
           flags_ &= ~PHASE_COMPLETED;
           flags_ |= PHASE_INT;
           buffer_.append(1, source);
+        } else if (auto delimiter = delimiters.find(source);
+                   delimiter != std::string::npos) {
+          flags_ |= PHASE_COMPLETED;
+          flags_ |= EMPTY_VALUE;
+          return delimiter;
         } else {
-          is.setstate(std::ios_base::iostate::_S_badbit);
+          is.setstate(std::ios::iostate::_S_badbit);
           return std::string::npos;
         }
         break;
@@ -666,7 +703,7 @@ private:
     switch (flags_ & PHASE_COMPLETED) {
     case PHASE_OBJECT:
       std::get<json_obj>(*this).read(is);
-      if (is.good()) {
+      if (std::get<json_obj>(*this).completed()) {
         flags_ &= ~PHASE_COMPLETED;
         flags_ |= PHASE_DELIMITER;
         return read_delimiter(is, delimiters);
@@ -674,7 +711,7 @@ private:
       break;
     case PHASE_ARRAY:
       std::get<json_arr>(*this).read(is);
-      if (is.good()) {
+      if (std::get<json_arr>(*this).completed()) {
         flags_ &= ~PHASE_COMPLETED;
         flags_ |= PHASE_DELIMITER;
         return read_delimiter(is, delimiters);
@@ -682,15 +719,14 @@ private:
       break;
     case PHASE_STRING:
       std::get<json_string>(*this).read(is);
-      if (is.good()) {
+      if (std::get<json_string>(*this).completed()) {
         flags_ &= ~PHASE_COMPLETED;
         flags_ |= PHASE_DELIMITER;
         return read_delimiter(is, delimiters);
       }
       break;
     case PHASE_NULL:
-      read_literal(is, null_);
-      if (is.good()) {
+      if (read_literal(is, null_)) {
         PARENT_TYPE::operator=({});
         flags_ &= ~PHASE_COMPLETED;
         flags_ |= PHASE_DELIMITER;
@@ -698,8 +734,7 @@ private:
       }
       break;
     case PHASE_TRUE:
-      read_literal(is, true_);
-      if (is.good()) {
+      if (read_literal(is, true_)) {
         PARENT_TYPE::operator=(true);
         flags_ &= ~PHASE_COMPLETED;
         flags_ |= PHASE_DELIMITER;
@@ -707,8 +742,7 @@ private:
       }
       break;
     case PHASE_FALSE:
-      read_literal(is, false_);
-      if (is.good()) {
+      if (read_literal(is, false_)) {
         PARENT_TYPE::operator=(false);
         flags_ &= ~PHASE_COMPLETED;
         flags_ |= PHASE_DELIMITER;
@@ -716,8 +750,7 @@ private:
       }
       break;
     case PHASE_BASE64_LITERAl:
-      read_literal(is, base64_);
-      if (is.good()) {
+      if (read_literal(is, base64_)) {
         PARENT_TYPE::operator=(std::vector<std::byte>{});
         flags_ &= ~PHASE_COMPLETED;
         flags_ |= PHASE_BASE64_DATA;
@@ -728,8 +761,7 @@ private:
       return read_base64_data(is, delimiters);
       break;
     case PHASE_OCTET_LITERAL:
-      read_literal(is, octet_);
-      if (is.good()) {
+      if (read_literal(is, octet_)) {
         PARENT_TYPE::operator=(std::vector<std::byte>{});
         flags_ &= ~PHASE_COMPLETED;
         flags_ |= PHASE_OCTET_SIZE;
@@ -741,6 +773,20 @@ private:
       break;
     case PHASE_OCTET_DATA:
       return read_octet_data(is, delimiters);
+      break;
+    case PHASE_STREAM_LITERAL:
+      if (read_literal(is, stream_)) {
+        PARENT_TYPE::operator=(std::vector<std::byte>{});
+        flags_ &= ~PHASE_COMPLETED;
+        flags_ |= PHASE_STREAM_DIVIDER_SIZE;
+        return read_stream_divider_size(is, delimiters);
+      }
+      break;
+    case PHASE_STREAM_DIVIDER_SIZE:
+      return read_stream_divider_size(is, delimiters);
+      break;
+    case PHASE_STREAM_DATA:
+      return read_stream_data(is, delimiters, false);
       break;
     case PHASE_INT:
       return read_int(is, delimiters);
@@ -755,13 +801,13 @@ private:
     return std::string::npos;
   }
 
-  void read_literal(std::istream &is, std::string_view literal) {
+  bool read_literal(std::istream &is, std::string_view literal) {
     char source;
     while (is >> source) {
       if (source == literal[buffer_.size() + 1]) {
         if (buffer_.size() + 2 == literal.size()) {
           buffer_.clear();
-          break;
+          return true;
         } else {
           buffer_.append(1, source);
         }
@@ -770,6 +816,7 @@ private:
         break;
       }
     }
+    return false;
   }
 
   std::size_t read_base64_data(std::istream &is,
@@ -843,9 +890,9 @@ private:
   std::size_t read_octet_data(std::istream &is, const std::string &delimiters) {
     char *end_ptr;
     std::size_t size = strtol(buffer_.c_str(), &end_ptr, 0);
-    get_binary().reserve(size);
     if (*end_ptr == '\0') {
-      while (is.good()) {
+      get_binary().reserve(size);
+      for (;;) {
         auto pre_size = get_binary().size();
         get_binary().resize(size);
         auto read_size = is.readsome(
@@ -853,12 +900,79 @@ private:
             size - pre_size);
         get_binary().resize(pre_size + read_size);
         if (read_size == 0) {
-          is.setstate(std::ios::iostate::_S_eofbit);
+          break;
         } else if (get_binary().size() == size) {
           buffer_.clear();
           flags_ &= ~PHASE_COMPLETED;
           flags_ |= PHASE_DELIMITER;
           return read_delimiter(is, delimiters);
+        }
+      }
+    } else {
+      is.setstate(std::ios::iostate::_S_badbit);
+    }
+    return std::string::npos;
+  }
+
+  std::size_t read_stream_divider_size(std::istream &is,
+                                       const std::string &delimiters) {
+    char source;
+    while (is >> source) {
+      if (std::isspace(source)) {
+        continue;
+      } else if (source == ';') {
+        flags_ &= ~PHASE_COMPLETED;
+        flags_ |= PHASE_STREAM_DATA;
+        return read_stream_data(is, delimiters, true);
+      } else {
+        buffer_.append(1, source);
+      }
+    }
+    return std::string::npos;
+  }
+
+  std::size_t read_stream_data(std::istream &is, const std::string &delimiters,
+                               bool grow) {
+    char *end_ptr;
+    std::size_t divider_size = strtol(buffer_.c_str(), &end_ptr, 0);
+    if (*end_ptr == '\0') {
+      if (grow) {
+        get_binary().resize(get_binary().size() + divider_size);
+        get_binary().back() = static_cast<std::byte>(divider_size);
+      }
+      bool zero = get_binary().size() >= 2 * divider_size &&
+                  std::all_of(get_binary().end().base() - 2 * divider_size,
+                              get_binary().end().base() - divider_size,
+                              [](auto &d) { return d == std::byte{0x00}; });
+      for (;;) {
+        auto read_request = static_cast<std::size_t>(get_binary().back());
+        auto read_response = is.readsome(
+            reinterpret_cast<char *>(get_binary().end().base()) - read_request,
+            read_request);
+        if (read_response == 0) {
+          break;
+        } else if (read_response < read_request) {
+          get_binary().back() =
+              static_cast<std::byte>(read_request - read_response);
+        } else {
+          if (zero) {
+            if (get_binary().back() == std::byte{0x00}) {
+              zero = false;
+            } else {
+              get_binary().resize(
+                  get_binary().size() - 2 * divider_size -
+                  static_cast<std::size_t>(get_binary().back()));
+              flags_ &= ~PHASE_COMPLETED;
+              flags_ |= PHASE_DELIMITER;
+              return read_delimiter(is, delimiters);
+            }
+          } else {
+            zero = std::all_of(get_binary().end().base() - divider_size,
+                               get_binary().end().base(),
+                               [](auto &d) { return d == std::byte{0x00}; });
+            get_binary().resize(get_binary().size() + divider_size);
+          }
+          get_binary().back() = static_cast<std::byte>(divider_size);
         }
       }
     } else {
@@ -1027,6 +1141,57 @@ private:
             std::byte source[3]{get_binary().data()[i],
                                 get_binary().data()[i + 1], std::byte{0}};
             b64_encode_chunk(source, chunk);
+            chunk[3] = '=';
+            os.write(chunk, sizeof(chunk));
+          }
+        }
+        break;
+      case JsonType::J_STREAM:
+        if (flags & formatter::Format_Options::prettify_) {
+          if (separate) {
+            os << " ";
+          }
+        }
+        if ((flags & formatter::Format_Options::bytes_as_binary_)) {
+          std::byte data[16];
+          os << stream_ << sizeof(data) << ';';
+          std::size_t read_size = 0;
+          while ((read_size =
+                      get_stream()->readsome(reinterpret_cast<char *>(&data),
+                                             sizeof(data))) == sizeof(data)) {
+            os.write(reinterpret_cast<char *>(&data), sizeof(data));
+            if (std::all_of(std::begin(data), std::end(data),
+                            [](auto &d) { return d == std::byte{0x00}; })) {
+              os.write(reinterpret_cast<char *>(&data), sizeof(data));
+            }
+          }
+          std::fill(std::begin(data) + read_size,
+                    std::begin(data) + sizeof(data), std::byte{0xff});
+          os.write(reinterpret_cast<char *>(&data), sizeof(data));
+          std::fill(std::begin(data), std::end(data), std::byte{0x00});
+          os.write(reinterpret_cast<char *>(&data), sizeof(data));
+          data[sizeof(data) - 1] =
+              static_cast<std::byte>(sizeof(data) - read_size);
+          os.write(reinterpret_cast<char *>(&data), sizeof(data));
+        } else {
+          os << base64_;
+          std::byte data[3];
+          char chunk[4];
+          std::size_t read_size = 0;
+          while ((read_size =
+                      get_stream()->readsome(reinterpret_cast<char *>(data),
+                                             sizeof(data))) == sizeof(data)) {
+            b64_encode_chunk(data, chunk);
+            os.write(chunk, sizeof(chunk));
+          }
+          if (read_size == 1) {
+            data[1] = data[2] = std::byte{0};
+            b64_encode_chunk(data, chunk);
+            chunk[2] = chunk[3] = '=';
+            os.write(chunk, sizeof(chunk));
+          } else if (read_size == 2) {
+            data[2] = std::byte{0};
+            b64_encode_chunk(data, chunk);
             chunk[3] = '=';
             os.write(chunk, sizeof(chunk));
           }

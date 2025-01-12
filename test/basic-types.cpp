@@ -1,5 +1,6 @@
 #include <iostream>
 #include <regex>
+#include <spanstream>
 #include <sstream>
 
 #include <json.hpp>
@@ -120,9 +121,58 @@ bool t08() {
   return true;
 }
 
+bool t09() {
+  jsonio::json json;
+  std::ispanstream{"stream;4;UUU"
+                   "\255"
+                   "\x00\x00\x00\x00"
+                   "\x00\x00\x00\001"} >>
+      json;
+  auto r = (std::ostringstream{} << json).str();
+  if (!json.completed() || json.type() != jsonio::JsonType::J_BINARY ||
+      r != "base64;VVVV" || json.get_binary().size() != 3 ||
+      json.get_binary()[0] != std::byte{'U'} ||
+      json.get_binary()[1] != std::byte{'U'} ||
+      json.get_binary()[2] != std::byte{'U'}) {
+    std::cerr << __FUNCTION__ << std::endl;
+    return false;
+  }
+  return true;
+}
+
+bool t10() {
+  std::istringstream is{"UUU"};
+  jsonio::json json = &is;
+  auto r = (std::ostringstream{} << json).str();
+  if (!json.completed() || json.type() != jsonio::JsonType::J_STREAM ||
+      r != "base64;VVVV") {
+    std::cerr << __FUNCTION__ << std::endl;
+    return false;
+  }
+  return true;
+}
+
+bool t11() {
+  std::istringstream is{"UUU"};
+  jsonio::json json = &is;
+  auto r = (std::ostringstream{} << json.format().bytes_as_binary()).str();
+  if (!json.completed() || json.type() != jsonio::JsonType::J_STREAM ||
+      std::memcmp(
+          r.data(),
+          "stream;16;UUU"
+          "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff"
+          "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+          "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0D",
+          r.size()) != 0) {
+    std::cerr << __FUNCTION__ << std::endl;
+    return false;
+  }
+  return true;
+}
+
 int main() {
   if (t01() && t02() && t03() && t04() && t05() && t06() && t07() && t08() &&
-      true) {
+      t09() && t10() && t11() && true) {
     return 0;
   }
   return -1;

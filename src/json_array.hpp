@@ -101,8 +101,8 @@ public:
     if ((flags_ & PHASE_COMPLETED) == PHASE_VALUE) {
       const std::string delimiters = ",]";
       for (;;) {
-        auto delimiter = value_->read(is, delimiters);
-        if (is.good()) {
+        if (auto delimiter = value_->read(is, delimiters);
+            delimiter != std::string::npos) {
           if ((value_->flags_ & json::EMPTY_VALUE) != json::EMPTY_VALUE) {
             PARENT_TYPE::push_back(std::move(*value_));
           } else if (PARENT_TYPE::size() != 0) {
@@ -111,10 +111,6 @@ public:
           }
           if (delimiters[delimiter] == ']') {
             flags_ |= PHASE_COMPLETED;
-            break;
-          } else if (delimiters[delimiter] == ',') {
-          } else {
-            is.setstate(std::ios::iostate::_S_badbit);
             break;
           }
         } else {
