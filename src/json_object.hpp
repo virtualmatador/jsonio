@@ -207,11 +207,6 @@ public:
 
   void write(std::ostream &os, int indents, unsigned int flags) const {
     if (completed()) {
-      if (flags & json::formatter::Format_Options::prettify_) {
-        for (int i = 0; i < indents; ++i) {
-          os << '\t';
-        }
-      }
       os << '{';
       if (flags & json::formatter::Format_Options::sort_asc_) {
         write_sorted<std::less<json_string>>(os, indents, flags);
@@ -221,10 +216,7 @@ public:
         write_unsorted(os, indents, flags);
       }
       if (flags & json::formatter::Format_Options::prettify_) {
-        os << '\n';
-        for (int i = 0; i < indents; ++i) {
-          os << '\t';
-        }
+        json::formatter::indent(os, indents - 1, flags);
       }
       os << '}';
     }
@@ -259,13 +251,10 @@ private:
       comma = true;
     }
     if (flags & json::formatter::Format_Options::prettify_) {
-      os << '\n';
-      for (int i = 0; i < indents + 1; ++i) {
-        os << '\t';
-      }
+      json::formatter::indent(os, indents, flags);
     }
     os << '\"' << pair.first << "\":";
-    pair.second.write(os, true, indents + 1, flags);
+    pair.second.write(os, true, indents, flags);
   }
 };
 

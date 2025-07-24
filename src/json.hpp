@@ -61,21 +61,35 @@ public:
     unsigned int flags_;
 
   private:
-    formatter(const json &object) : object_{object}, flags_{0} {}
+    formatter(const json &object) : object_{object}, flags_{0x00000420} {}
     void write(std::ostream &os) const { object_.write(os, false, 0, flags_); }
-
-  public:
+    static void indent(std::ostream &os, int indents, unsigned int flags) {
+      os << '\n';
+      for (int i = 0; i < indents * reinterpret_cast<char *>(&flags)[1]; ++i) {
+        os << reinterpret_cast<char *>(&flags)[0];
+      }
+    }
     enum Format_Options : unsigned int {
-      prettify_ = 0x0001,
-      new_line_bracket_ = 0x0002,
-      sort_asc_ = 0x0004,
-      sort_desc_ = 0x0008,
-      bytes_as_binary_ = 0x0010,
+      prettify_ = 0x00010000,
+      new_line_bracket_ = 0x00020000,
+      sort_asc_ = 0x00040000,
+      sort_desc_ = 0x00080000,
+      bytes_as_binary_ = 0x00100000,
     };
 
   public:
     formatter &prettify() {
       flags_ |= Format_Options::prettify_;
+      return *this;
+    }
+
+    formatter &use_tabs() {
+      reinterpret_cast<char *>(flags_)[0] = '\t';
+      return *this;
+    }
+
+    formatter &separators(int count) {
+      reinterpret_cast<char *>(flags_)[1] = static_cast<char>(count);
       return *this;
     }
 
@@ -102,6 +116,8 @@ public:
 
   public:
     friend json;
+    friend json_arr;
+    friend json_obj;
     friend std::ostream &operator<<(std::ostream &os,
                                     const json::formatter &source) {
       source.write(os);
@@ -836,7 +852,7 @@ private:
       } else if (buffer_.append(1, source); buffer_.size() == 4) {
         if (buffer_[3] != '=') {
           get_binary().resize(get_binary().size() + 3);
-          b64_decode_chunk(reinterpret_cast<const char(&)[4]>(*buffer_.data()),
+          b64_decode_chunk(reinterpret_cast<const char (&)[4]>(*buffer_.data()),
                            reinterpret_cast<std::byte(&)[3]>(
                                get_binary().at(get_binary().size() - 3)));
           buffer_.clear();
@@ -845,13 +861,13 @@ private:
             buffer_[3] = 'A';
             std::byte dest[3];
             b64_decode_chunk(
-                reinterpret_cast<const char(&)[4]>(*buffer_.data()), dest);
+                reinterpret_cast<const char (&)[4]>(*buffer_.data()), dest);
             std::copy(dest, dest + 2, std::back_insert_iterator(get_binary()));
           } else {
             buffer_[2] = buffer_[3] = 'A';
             std::byte dest[3];
             b64_decode_chunk(
-                reinterpret_cast<const char(&)[4]>(*buffer_.data()), dest);
+                reinterpret_cast<const char (&)[4]>(*buffer_.data()), dest);
             std::copy(dest, dest + 1, std::back_insert_iterator(get_binary()));
           }
           buffer_.clear();
@@ -1201,25 +1217,25 @@ private:
         if (flags & formatter::Format_Options::prettify_) {
           if (separate) {
             if (flags & formatter::Format_Options::new_line_bracket_) {
-              os << "\n";
+              json::formatter::indent(os, indents, flags);
             } else {
               os << " ";
             }
           }
         }
-        std::get<json_arr>(*this).write(os, indents, flags);
+        std::get<json_arr>(*this).write(os, indents + 1, flags);
         break;
       case JsonType::J_OBJECT:
         if (flags & formatter::Format_Options::prettify_) {
           if (separate) {
             if (flags & formatter::Format_Options::new_line_bracket_) {
-              os << "\n";
+              json::formatter::indent(os, indents, flags);
             } else {
               os << " ";
             }
           }
         }
-        std::get<json_obj>(*this).write(os, indents, flags);
+        std::get<json_obj>(*this).write(os, indents + 1, flags);
         break;
       }
     }

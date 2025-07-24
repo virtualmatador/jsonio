@@ -14,8 +14,8 @@ bool t01() {
   auto r = (std::ostringstream{}
             << obj.format().sort().prettify().new_line_bracket())
                .str();
-  if (r != "{\n\t\"a\": 3,\n\t\"b\": false,\n\t\"c\":\n\t"
-           "{\n\t\t\"cc\": \"some text\"\n\t}\n}") {
+  if (r != "{\n    \"a\": 3,\n    \"b\": false,\n    \"c\":\n    {\n        "
+           "\"cc\": \"some text\"\n    }\n}") {
     std::cerr << __FUNCTION__ << std::endl;
     return false;
   }
@@ -27,7 +27,7 @@ bool t02() {
   arr.get_array().emplace_back("a");
   arr.get_array().emplace_back(1L);
   auto r = (std::ostringstream{} << arr.format().prettify()).str();
-  if (r != "[\n\t\"a\",\n\t1\n]") {
+  if (r != "[\n    \"a\",\n    1\n]") {
     std::cerr << __FUNCTION__ << std::endl;
     return false;
   }
@@ -39,7 +39,7 @@ bool t03() {
   std::istringstream{"base64;ICAg"} >> obj["a"];
   auto r =
       (std::ostringstream{} << obj.format().prettify().bytes_as_binary()).str();
-  if (r != "{\n\t\"a\": octet;3;   \n}") {
+  if (r != "{\n    \"a\": octet;3;   \n}") {
     std::cerr << __FUNCTION__ << std::endl;
     return false;
   }
