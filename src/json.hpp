@@ -585,6 +585,26 @@ public:
     return std::get<json_obj>(*this).at(key);
   }
 
+  json_obj::iterator find(const std::string &key) {
+    return std::get<json_obj>(*this).find(key);
+  }
+
+  json_obj::const_iterator find(const std::string &key) const {
+    return std::get<json_obj>(*this).find(key);
+  }
+
+  json_obj::iterator begin() { return std::get<json_obj>(*this).begin(); }
+
+  json_obj::const_iterator begin() const {
+    return std::get<json_obj>(*this).begin();
+  }
+
+  json_obj::iterator end() { return std::get<json_obj>(*this).end(); }
+
+  json_obj::const_iterator end() const {
+    return std::get<json_obj>(*this).end();
+  }
+
   bool is_null() { return type() == JsonType::J_NULL; }
 
   std::string &get_string() {
